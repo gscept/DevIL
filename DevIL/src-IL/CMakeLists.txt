@@ -20,17 +20,17 @@ SET(LIBRARY_OUTPUT_PATH		${DEVIL_LIB_DEST_DIR}	)
 #
 IF(WIN32)
 	ADD_DEFINITIONS(-DIL_USE_PRAGMA_LIBS)
-	IF(BUILD_SHARED_LIBS)
+	IF(DEVIL_BUILD_SHARED_LIBS)
 		#ADD_DEFINITIONS(-DIL_DLL -DMNG_DLL -DMNG_USE_DLL -DJPEGDLL)
 		ADD_DEFINITIONS(-DIL_DLL -DJPEGSTATIC)
-		SET(DevIL_SRCS ${DevIL_SRCS} msvc/il.def)
-		SET(DevIL_RSRC ${DevIL_RSRC} "msvc/resources/IL Logo.ico" msvc/IL.rc)
-		SET(DevIL_TXT ${DevIL_TXT} ../AUTHORS ../ChangeLog ../CREDITS ../libraries.txt ../MSVC++.txt ../README.unix ../README.win ../TODO)
+		#SET(DevIL_SRCS ${DevIL_SRCS} msvc/il.def)
+		#SET(DevIL_RSRC ${DevIL_RSRC} "msvc/resources/IL Logo.ico" msvc/IL.rc)
+		#SET(DevIL_TXT ${DevIL_TXT} ../AUTHORS ../ChangeLog ../CREDITS ../libraries.txt ../MSVC++.txt ../README.unix ../README.win ../TODO)
 #		SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:msvcrt.lib ")
 		SET(CMAKE_C_FLAGS_RELEASE "/MT /O2")
-	ELSE(BUILD_SHARED_LIBS)
+	ELSE(DEVIL_BUILD_SHARED_LIBS)
 		ADD_DEFINITIONS(-DIL_STATIC_LIB -DJPEGSTATIC)
-	ENDIF(BUILD_SHARED_LIBS)
+	ENDIF(DEVIL_BUILD_SHARED_LIBS)
 ENDIF(WIN32)
 
 SOURCE_GROUP("Source Files" FILES src/*.c src/*.cpp)
@@ -39,16 +39,16 @@ SOURCE_GROUP("Resource Files" FILES ${DevIL_RSRC} )
 SOURCE_GROUP("Text Files" FILES ${DevIL_TXT} )
 
 # Remove SHARED to create a static library
-ADD_LIBRARY(DevIL SHARED ${DevIL_SRCS} ${DevIL_INC} ${DevIL_RSRC} ${DevIL_TXT})
+ADD_LIBRARY(DevIL STATIC ${DevIL_SRCS} ${DevIL_INC} ${DevIL_RSRC} ${DevIL_TXT})
 
 ## add link sub library info
 
 TARGET_LINK_LIBRARIES(DevIL
-	lcms
+	#lcms
 	libjpeg
-	libmng
+	#libmng
 	libpng
-	libtiff
+	#libtiff
 	zlib
 )
 

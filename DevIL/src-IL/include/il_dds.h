@@ -47,6 +47,15 @@ typedef struct DDSHEAD
 	ILuint	ddsCaps1, ddsCaps2, ddsCaps3, ddsCaps4; // direct draw surface capabilities
 	ILuint	TextureStage;
 } IL_PACKSTRUCT DDSHEAD;
+
+typedef struct DDSEXTHEAD
+{
+	ILuint DxgiFormat;
+	ILuint ResourceDimension;
+	ILuint MiscFlags;
+	ILuint ArraySize;
+	ILuint MiscFlags2;
+} IL_PACKSTRUCT DDSEXTHEAD;
 #ifdef _WIN32
 	#pragma pack(pop, dds_struct)
 #endif
@@ -150,6 +159,11 @@ enum PixFormat
 	PF_DXT3,
 	PF_DXT4,
 	PF_DXT5,
+	PF_DXT1_sRGB,
+	PF_DXT3_sRGB,
+	PF_DXT5_sRGB,
+	PF_BC7,
+	PF_BC7_sRGB,
 	PF_3DC,
 	PF_ATI1N,
 	PF_LUMINANCE,
@@ -186,6 +200,7 @@ ILboolean	DecompressDXT2(ILimage *lImage, ILubyte *lCompData);
 ILboolean	DecompressDXT3(ILimage *lImage, ILubyte *lCompData);
 ILboolean	DecompressDXT4(ILimage *lImage, ILubyte *lCompData);
 ILboolean	DecompressDXT5(ILimage *lImage, ILubyte *lCompData);
+ILboolean	DecompressBC7(ILimage *lImage, ILubyte *lCompData);
 ILboolean	Decompress3Dc();
 ILboolean	DecompressAti1n();
 ILboolean	DecompressRXGB();

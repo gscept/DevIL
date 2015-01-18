@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 PROJECT(ImageLib)
 
 
-OPTION(BUILD_SHARED_LIBS "Build with shared (.DLL .SO) libraries." ON)
+OPTION(DEVIL_BUILD_SHARED_LIBS "Build with shared (.DLL .SO) libraries." OFF)
 
 
 SET(DEVIL_INCS
@@ -41,4 +41,4 @@ ENDIF(BUILD_SHARED_LIBS)
 
 
 
-EXPORT_LIBRARY_DEPENDENCIES(CMakeDepends.txt)
+#EXPORT_LIBRARY_DEPENDENCIES(CMakeDepends.txt)

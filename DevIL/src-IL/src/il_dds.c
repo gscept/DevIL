@@ -31,6 +31,7 @@
 
 // Global variables
 static DDSHEAD	Head;				// Image header
+static DDSEXTHEAD ExtHead;
 static ILubyte	*CompData = NULL;	// Compressed data
 static ILuint	CompSize;			// Compressed size
 //static ILuint	CompFormat;			// Compressed format
@@ -133,6 +134,17 @@ ILboolean iGetDdsHead(DDSHEAD *Header)
 	return IL_TRUE;
 }
 
+// Internal function used to get the .dds extended header from the current file.
+ILboolean iGetDdsExtHead(DDSEXTHEAD *Header)
+{
+	Header->DxgiFormat = GetLittleUInt();
+	Header->ResourceDimension = GetLittleUInt();
+	Header->MiscFlags = GetLittleUInt();
+	Header->ArraySize = GetLittleUInt();
+	Header->MiscFlags2 = GetLittleUInt();
+
+	return IL_TRUE;
+}
 
 // Internal function to get the header and check it.
 ILboolean iIsValidDds()
@@ -390,6 +402,12 @@ ILboolean iLoadDdsInternal()
 		ilSetError(IL_INVALID_FILE_HEADER);
 		return IL_FALSE;
 	}
+	if (Head.FourCC == IL_MAKEFOURCC('D', 'X', '1', '0')) {
+		if (!iGetDdsExtHead(&ExtHead)) {
+			ilSetError(IL_INVALID_FILE_HEADER);
+			return IL_FALSE;
+		}
+	}
 
 	BlockSize = DecodePixelFormat(&CompFormat);
 	if (CompFormat == PF_UNKNOWN) {
@@ -537,6 +555,40 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 				BlockSize = Head.Width * Head.Height * Head.Depth * 16;
 				break;
 
+			case IL_MAKEFOURCC('D', 'X', '1', '0'):
+			{
+				switch (ExtHead.DxgiFormat)
+				{
+				case 29:	// sRGB
+				case 91:	// sRGB BGRA
+				case 93:	// sRGB BGR
+					*CompFormat = PF_ARGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+				
+				case 72:	// DXT1 sRGB
+					*CompFormat = PF_DXT1_sRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+
+				case 75:
+					*CompFormat = PF_DXT3_sRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+
+				case 78:
+					*CompFormat = PF_DXT5_sRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+
+				case 98:
+					*CompFormat = PF_BC7_sRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+
+				case 99:
+					*CompFormat = PF_BC7_sRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+				}
+			}
+				
+				break;
+
 			default:
 				*CompFormat = PF_UNKNOWN;
 				BlockSize *= 16;
@@ -598,10 +650,15 @@ void AdjustVolumeTexture(DDSHEAD *Head, ILuint CompFormat)
 			Head->LinearSize = ((Head->Width+3)/4) * ((Head->Height+3)/4) * 8;
 			break;
 
+		case PF_DXT1_sRGB:
 		case PF_DXT2:
 		case PF_DXT3:
+		case PF_DXT3_sRGB:
 		case PF_DXT4:
 		case PF_DXT5:
+		case PF_DXT5_sRGB:		
+		case PF_BC7:
+		case PF_BC7_sRGB:
 		case PF_3DC:
 		case PF_RXGB:
 			Head->LinearSize = ((Head->Width+3)/4) * ((Head->Height+3)/4) * 16;
@@ -789,20 +846,27 @@ ILboolean DdsDecompress(ILuint CompFormat)
 		case PF_LUMINANCE_ALPHA:
 			return DecompressARGB(CompFormat);
 
+		case PF_DXT1_sRGB:
 		case PF_DXT1:
 			return DecompressDXT1(Image, CompData);
 
 		case PF_DXT2:
 			return DecompressDXT2(Image, CompData);
 
+		case PF_DXT3_sRGB:
 		case PF_DXT3:
 			return DecompressDXT3(Image, CompData);
 
 		case PF_DXT4:
 			return DecompressDXT4(Image, CompData);
 
+		case PF_DXT5_sRGB:
 		case PF_DXT5:
 			return DecompressDXT5(Image, CompData);
+
+		case PF_BC7_sRGB:
+		case PF_BC7:
+			return DecompressBC7(Image, CompData);
 
 		case PF_ATI1N:
 			return DecompressAti1n();
@@ -857,14 +921,19 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 	//}
 	switch (CompFormat)
 	{
+		case PF_DXT1_sRGB:
 		case PF_DXT1:
 			// This is officially 6, we have 8 here because DXT1 may contain alpha.
 			CompFactor = 8;
 			break;
 		case PF_DXT2:
 		case PF_DXT3:
+		case PF_DXT3_sRGB:
 		case PF_DXT4:
 		case PF_DXT5:
+		case PF_DXT5_sRGB:
+		case PF_BC7:
+		case PF_BC7_sRGB:
 			CompFactor = 4;
 			break;
 		case PF_RXGB:
@@ -1313,6 +1382,11 @@ ILboolean DecompressDXT5(ILimage *lImage, ILubyte *lCompData)
 	return IL_TRUE;
 }
 
+ILboolean DecompressBC7(ILimage *lImage, ILubyte *lCompData)
+{
+	// implement me!
+	return IL_FALSE;
+}
 
 ILboolean Decompress3Dc()
 {
