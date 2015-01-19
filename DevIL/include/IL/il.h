@@ -393,6 +393,11 @@ typedef long long unsigned int ILuint64;
 #define IL_RXGB             0x070F
 #define IL_ATI1N            0x0710
 #define IL_DXT1A            0x0711  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
+#define IL_DXT1A_sRGB		0x0712
+#define IL_DXT3_sRGB		0x0713
+#define IL_DXT5_sRGB		0x0714
+#define IL_BPTC				0x0715
+#define IL_BPTC_sRGB		0x0716
 
 // Environment map definitions
 #define IL_CUBEMAP_POSITIVEX 0x00000400

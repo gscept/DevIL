@@ -48,6 +48,13 @@ typedef struct DDSHEAD
 	ILuint	TextureStage;
 } IL_PACKSTRUCT DDSHEAD;
 
+#ifdef _WIN32
+	#pragma pack(pop, dds_struct)
+#endif
+
+#ifdef _WIN32
+	#pragma pack(push, dds_ext_struct, 1)
+#endif
 typedef struct DDSEXTHEAD
 {
 	ILuint DxgiFormat;
@@ -56,10 +63,10 @@ typedef struct DDSEXTHEAD
 	ILuint ArraySize;
 	ILuint MiscFlags2;
 } IL_PACKSTRUCT DDSEXTHEAD;
-#ifdef _WIN32
-	#pragma pack(pop, dds_struct)
-#endif
 
+#ifdef _WIN32
+	#pragma pack(pop, dds_ext_struct)
+#endif
 
 
 // use cast to struct instead of RGBA_MAKE as struct is

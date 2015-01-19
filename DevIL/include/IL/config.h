@@ -53,7 +53,7 @@
 #define IL_USE_DXTC_NVIDIA
 #define IL_USE_DXTC_SQUISH
 
-//#define IL_NO_GAMES
+#define IL_NO_GAMES
 
 /* Supported api (ilut) */
 

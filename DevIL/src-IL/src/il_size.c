@@ -92,8 +92,9 @@ ILuint ilDetermineSize(ILenum Type)
 
 		#ifndef IL_NO_DDS
 		case IL_DDS:
-			ilSaveDdsL(NULL, 0);
-			break;
+			//ilSaveDdsL(NULL, 0);
+			return 0;
+			//break;
 		#endif//IL_NO_DDS
 
 		#ifndef IL_NO_EXR

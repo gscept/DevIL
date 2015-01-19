@@ -55,25 +55,25 @@ ILAPI ILubyte* ILAPIENTRY ilSquishCompressDXT(ILubyte *Data, ILuint Width, ILuin
 	{
 		case IL_DXT1:  // Should these two be
 		case IL_DXT1A: //  any different?
-			Flags = squish::kDxt1;
+			Flags = nvsquish::kDxt1;
 			break;
 		case IL_DXT3:
-			Flags = squish::kDxt3;
+			Flags = nvsquish::kDxt3;
 			break;
 		case IL_DXT5:
-			Flags = squish::kDxt5;
+			Flags = nvsquish::kDxt5;
 			break;
 		default:  // Does not support DXT2 or DXT4.
 			ilSetError(IL_INVALID_PARAM);
 			break;
 	}
 
-	Size = squish::GetStorageRequirements(Width, Height, Flags);
+	Size = nvsquish::GetStorageRequirements(Width, Height, Flags);
 	DxtcData = (ILubyte*)ialloc(Size);
 	if (DxtcData == NULL)
 		return NULL;
 
-	squish::CompressImage(Data, Width, Height, DxtcData, Flags);
+	nvsquish::CompressImage(Data, Width, Height, DxtcData, Flags);
 
 	*DxtSize = Size;
 	return DxtcData;

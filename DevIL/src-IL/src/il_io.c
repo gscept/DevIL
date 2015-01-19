@@ -2159,7 +2159,8 @@ ILboolean ILAPIENTRY ilSave(ILenum Type, ILconst_string FileName)
 
 		#ifndef IL_NO_DDS
 		case IL_DDS:
-    		return ilSaveDds(FileName);
+    		//return ilSaveDds(FileName);
+			return IL_FALSE; // we don't need this and it conflicts with nvimage
 		#endif
 
 		#ifndef IL_NO_EXR
@@ -2266,7 +2267,8 @@ ILuint ILAPIENTRY ilSaveF(ILenum Type, ILHANDLE File)
 
 		#ifndef IL_NO_DDS
 		case IL_DDS:
-			Ret = ilSaveDdsF(File);
+			//Ret = ilSaveDdsF(File);
+			Ret = IL_FALSE; // we don't need this and it conflicts with nvimage
 			break;
 		#endif
 
@@ -2441,7 +2443,8 @@ ILuint ILAPIENTRY ilSaveL(ILenum Type, void *Lump, ILuint Size)
 
 		#ifndef IL_NO_DDS
 		case IL_DDS:
-			return ilSaveDdsL(Lump, Size);
+			//return ilSaveDdsL(Lump, Size);
+			return IL_FALSE; // we don't need this and it conflicts with nvimage
 		#endif
 
 		#ifndef IL_NO_VTF
@@ -2506,7 +2509,8 @@ ILboolean ILAPIENTRY ilSaveImage(ILconst_string FileName)
 
 	#ifndef IL_NO_DDS
 	if (!iStrCmp(Ext, IL_TEXT("dds"))) {
-		bRet = ilSaveDds(FileName);
+		//bRet = ilSaveDds(FileName);
+		bRet = IL_FALSE; // don't save DDS because it conflicts with nvimage
 		goto finish;
 	}
 	#endif

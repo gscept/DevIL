@@ -564,26 +564,32 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 				case 93:	// sRGB BGR
 					*CompFormat = PF_ARGB;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
 				
 				case 72:	// DXT1 sRGB
 					*CompFormat = PF_DXT1_sRGB;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					BlockSize *= 8;
+					break;
 
 				case 75:
 					*CompFormat = PF_DXT3_sRGB;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+					BlockSize *= 16;
+					break;
 
 				case 78:
 					*CompFormat = PF_DXT5_sRGB;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+					BlockSize *= 16;
+					break;
 
 				case 98:
 					*CompFormat = PF_BC7_sRGB;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+					BlockSize *= 16;
+					break;
 
 				case 99:
 					*CompFormat = PF_BC7_sRGB;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+					BlockSize *= 16;
+					break;
 				}
 			}
 				
@@ -2051,13 +2057,20 @@ void GetBitsFromMask(ILuint Mask, ILuint *ShiftLeft, ILuint *ShiftRight)
 // DXT extension code
 //
 //
-ILubyte* ILAPIENTRY ilGetDxtcData()
+ILuint ILAPIENTRY ilGetDXTCData(void *Buffer, ILuint BufferSize, ILenum DXTCFormat)
 {
 	if (iCurImage == NULL) {
 		ilSetError(IL_INTERNAL_ERROR);
-		return NULL;
+		return 0;
 	}
-	return iCurImage->DxtcData;
+
+	if (Buffer == 0) {
+		return iCurImage->DxtcSize;
+	}
+
+	// eh, fix me?
+	//Buffer = iCurImage->DxtcData;
+	return iCurImage->DxtcSize;
 }
 
 void ilFreeSurfaceDxtcData()

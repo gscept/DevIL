@@ -48,8 +48,12 @@ struct ilOutputHandlerMem : public nvtt::OutputHandler
 			case IL_DXT1A:
 				Size = Width * Height / 2;
 				break;
+			case IL_DXT3_sRGB:
 			case IL_DXT3:
+			case IL_DXT5_sRGB:
 			case IL_DXT5:
+			case IL_BPTC:
+			case IL_BPTC_sRGB:
 				Size = Width * Height;
 				break;
 
@@ -72,6 +76,10 @@ struct ilOutputHandlerMem : public nvtt::OutputHandler
 		memcpy(Temp, data, size);
 		Temp += size;
 		return true;
+	}
+	virtual void endImage()
+	{
+		// ignore.
 	}
 
 	ILubyte	*NewData, *Temp;
@@ -161,6 +169,10 @@ struct ilOutputHandlerFile : public nvtt::OutputHandler
 		if (iwrite(data, 1, size) == size)
 			return true;
 		return false;
+	}
+	virtual void endImage()
+	{
+		// ignore.
 	}
 
 };
