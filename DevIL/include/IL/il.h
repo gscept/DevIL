@@ -129,6 +129,8 @@ typedef long long unsigned int ILuint64;
 #define IL_BGRA             0x80E1
 #define IL_LUMINANCE        0x1909
 #define IL_LUMINANCE_ALPHA  0x190A
+#define IL_RED				0x190B
+#define IL_RG				0x190C
 
 //! Data types \link Types Types\endlink
 #define IL_BYTE           0x1400
