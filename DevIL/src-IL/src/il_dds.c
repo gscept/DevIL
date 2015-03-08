@@ -571,24 +571,62 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 					BlockSize *= 8;
 					break;
 
-				case 75:
+				case 75:	// DXT3 sRGB
 					*CompFormat = PF_DXT3_sRGB;
 					BlockSize *= 16;
 					break;
 
-				case 78:
+				case 78:	// DXT5 sRGB
 					*CompFormat = PF_DXT5_sRGB;
 					BlockSize *= 16;
 					break;
 
-				case 98:
+				case 98:	// BC7
+					*CompFormat = PF_BC7;
+					BlockSize *= 16;
+					break;
+
+				case 99:	// BC7 sRGB
 					*CompFormat = PF_BC7_sRGB;
 					BlockSize *= 16;
 					break;
 
-				case 99:
-					*CompFormat = PF_BC7_sRGB;
-					BlockSize *= 16;
+				case 2:		// DXGI_FORMAT_R32G32B32A32_FLOAT
+					*CompFormat = PF_A32B32G32R32F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+					break;
+
+				case 10:	// DXGI_FORMAT_R16G16B16A16_FLOAT
+					*CompFormat = PF_A16B16G16R16F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					break;
+
+				case 11:	// DXGI_FORMAT_R16G16B16A16_UNORM
+				case 12:	// DXGI_FORMAT_R16G16B16A16_UINT
+				case 13:	// DXGI_FORMAT_R16G16B16A16_SNORM
+				case 14:	// DXGI_FORMAT_R16G16B16A16_SINT
+					*CompFormat = PF_A16B16G16R16;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					break;
+
+				case 16:	// DXGI_FORMAT_R32G32_FLOAT
+					*CompFormat = PF_G32R32F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					break;
+
+				case 34:	// DXGI_FORMAT_R16G16_FLOAT
+					*CompFormat = PF_G16R16F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 41:	// DXGI_FORMAT_R32_FLOAT
+					*CompFormat = PF_R32F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 54:	// DXGI_FORMAT_R16_FLOAT
+					*CompFormat = PF_R16F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 2;
 					break;
 				}
 			}
@@ -2057,6 +2095,7 @@ void GetBitsFromMask(ILuint Mask, ILuint *ShiftLeft, ILuint *ShiftRight)
 // DXT extension code
 //
 //
+/*
 ILuint ILAPIENTRY ilGetDXTCData(void *Buffer, ILuint BufferSize, ILenum DXTCFormat)
 {
 	if (iCurImage == NULL) {
@@ -2072,6 +2111,7 @@ ILuint ILAPIENTRY ilGetDXTCData(void *Buffer, ILuint BufferSize, ILenum DXTCForm
 	//Buffer = iCurImage->DxtcData;
 	return iCurImage->DxtcSize;
 }
+*/
 
 void ilFreeSurfaceDxtcData()
 {

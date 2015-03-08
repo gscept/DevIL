@@ -50,8 +50,8 @@
  #define IL_NO_XPM
 
 #define IL_USE_JPEGLIB_UNMODIFIED 1
-#define IL_USE_DXTC_NVIDIA
-#define IL_USE_DXTC_SQUISH
+//#define IL_USE_DXTC_NVIDIA
+//#define IL_USE_DXTC_SQUISH
 
 #define IL_NO_GAMES
 

@@ -183,7 +183,6 @@ ILAPI ILimage* ILAPIENTRY iluScale_(ILimage *Image, ILuint Width, ILuint Height,
 		ilSetCurImage(CurImage);
 		ilCloseImage(ToScale);
 	}
-
 	return Scaled;
 }
 

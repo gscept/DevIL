@@ -269,7 +269,7 @@ ILboolean ILAPIENTRY ilRegisterNumFaces(ILuint Num)
 {
 	ILimage *Next, *Prev;
 
-	ilBindImage(ilGetCurName());  // Make sure the current image is actually bound.
+	if (!iCurImage) return IL_FALSE;
 	ilCloseImage(iCurImage->Faces);  // Close any current mipmaps.
 
 	iCurImage->Faces = NULL;
@@ -302,11 +302,11 @@ ILboolean ILAPIENTRY ilRegisterNumFaces(ILuint Num)
 }
 
 
-ILboolean ILAPIENTRY ilRegisterMipNum(ILuint Num)
+ILboolean ILAPIENTRY ilRegisterNumMips(ILuint Num)
 {
 	ILimage *Next, *Prev;
 
-	ilBindImage(ilGetCurName());  // Make sure the current image is actually bound.
+	if (!iCurImage) return IL_FALSE;
 	ilCloseImage(iCurImage->Mipmaps);  // Close any current mipmaps.
 
 	iCurImage->Mipmaps = NULL;
@@ -320,18 +320,18 @@ ILboolean ILAPIENTRY ilRegisterMipNum(ILuint Num)
 	Num--;
 
 	while (Num) {
-		Next->Next = ilNewImage(1, 1, 1, 1, 1);
-		if (Next->Next == NULL) {
+		Next->Mipmaps = ilNewImage(1, 1, 1, 1, 1);
+		if (Next->Mipmaps == NULL) {
 			// Clean up before we error out.
 			Prev = iCurImage->Mipmaps;
 			while (Prev) {
-				Next = Prev->Next;
+				Next = Prev->Mipmaps;
 				ilCloseImage(Prev);
 				Prev = Next;
 			}
 			return IL_FALSE;
 		}
-		Next = Next->Next;
+		Next = Next->Mipmaps;
 		Num--;
 	}
 
@@ -343,7 +343,7 @@ ILboolean ILAPIENTRY ilRegisterNumImages(ILuint Num)
 {
 	ILimage *Next, *Prev;
 
-	ilBindImage(ilGetCurName());  // Make sure the current image is actually bound.
+	if (!iCurImage) return IL_FALSE;
 	ilCloseImage(iCurImage->Next);  // Close any current "next" images.
 
 	iCurImage->Next = NULL;

@@ -288,14 +288,16 @@ ILboolean ILAPIENTRY ilActiveMipmap(ILuint Number)
 	}
 
     iTempImage = iCurImage;
+	/*
 	iCurImage = iCurImage->Mipmaps;
 	if (iCurImage == NULL) {
 		iCurImage = iTempImage;
 		ilSetError(IL_ILLEGAL_OPERATION);
 		return IL_FALSE;
 	}
+	*/
 
-	for (Current = 1; Current < Number; Current++) {
+	for (Current = 0; Current < Number; Current++) {
 		iCurImage = iCurImage->Mipmaps;
 		if (iCurImage == NULL) {
 			ilSetError(IL_ILLEGAL_OPERATION);
@@ -326,14 +328,16 @@ ILboolean ILAPIENTRY ilActiveImage(ILuint Number)
 	}
 
     iTempImage = iCurImage;
+	/*
 	iCurImage = iCurImage->Next;
 	if (iCurImage == NULL) {
 		iCurImage = iTempImage;
 		ilSetError(IL_ILLEGAL_OPERATION);
 		return IL_FALSE;
 	}
+	*/
 
-	Number--;  // Skip 0 (parent image)
+	//Number--;  // Skip 0 (parent image)
 	for (Current = 0; Current < Number; Current++) {
 		iCurImage = iCurImage->Next;
 		if (iCurImage == NULL) {
@@ -365,15 +369,17 @@ ILboolean ILAPIENTRY ilActiveFace(ILuint Number)
 	}
 
     iTempImage = iCurImage;
+	/*
 	iCurImage = iCurImage->Faces;
 	if (iCurImage == NULL) {
 		iCurImage = iTempImage;
 		ilSetError(IL_ILLEGAL_OPERATION);
 		return IL_FALSE;
 	}
+	*/
 
 	//Number--;  // Skip 0 (parent image)
-	for (Current = 1; Current < Number; Current++) {
+	for (Current = 0; Current < Number; Current++) {
 		iCurImage = iCurImage->Faces;
 		if (iCurImage == NULL) {
 			ilSetError(IL_ILLEGAL_OPERATION);
@@ -405,6 +411,7 @@ ILboolean ILAPIENTRY ilActiveLayer(ILuint Number)
 	}
 
     iTempImage = iCurImage;
+	/*
 	iCurImage = iCurImage->Layers;
 	if (iCurImage == NULL) {
 		iCurImage = iTempImage;
@@ -412,8 +419,9 @@ ILboolean ILAPIENTRY ilActiveLayer(ILuint Number)
 		return IL_FALSE;
 	}
 
+	*/
 	//Number--;  // Skip 0 (parent image)
-	for (Current = 1; Current < Number; Current++) {
+	for (Current = 0; Current < Number; Current++) {
 		iCurImage = iCurImage->Layers;
 		if (iCurImage == NULL) {
 			ilSetError(IL_ILLEGAL_OPERATION);

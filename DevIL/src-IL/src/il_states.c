@@ -1090,6 +1090,12 @@ void ILAPIENTRY ilSetInteger(ILenum Mode, ILint Param)
 				break;
 			}
 			iCurImage->CubeFlags = Param;
+		case IL_IMAGE_ORIGIN:
+			if (iCurImage == NULL) {
+				ilSetError(IL_ILLEGAL_OPERATION);
+				break;
+			}
+			iCurImage->Origin = Param;
 			break;
  
 		// Format specific values
@@ -1100,7 +1106,7 @@ void ILAPIENTRY ilSetInteger(ILenum Mode, ILint Param)
 			}
 			break;
 		case IL_DXTC_FORMAT:
-			if (Param >= IL_DXT1 || Param <= IL_DXT5 || Param == IL_DXT1A) {
+			if (Param >= IL_DXT1 || Param <= IL_DXT5 || Param >= IL_DXT1A_sRGB || Param <= IL_DXGI_UNCOMPRESSED) {
 				ilStates[ilCurrentPos].ilDxtcFormat = Param;
 				return;
 			}

@@ -393,13 +393,16 @@ typedef long long unsigned int ILuint64;
 #define IL_DXTC_DATA_FORMAT 0x070D
 #define IL_3DC              0x070E
 #define IL_RXGB             0x070F
-#define IL_ATI1N            0x0710
-#define IL_DXT1A            0x0711  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
-#define IL_DXT1A_sRGB		0x0712
-#define IL_DXT3_sRGB		0x0713
-#define IL_DXT5_sRGB		0x0714
-#define IL_BPTC				0x0715
-#define IL_BPTC_sRGB		0x0716
+#define IL_ATI1N            0x07A0
+#define IL_DXT1A            0x07A1  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
+
+// DXGI formats
+#define IL_DXT1A_sRGB		0x07A2
+#define IL_DXT3_sRGB		0x07A3
+#define IL_DXT5_sRGB		0x07A4
+#define IL_BPTC				0x07A5
+#define IL_BPTC_sRGB		0x07A6
+#define IL_DXGI_UNCOMPRESSED 0x07A7
 
 // Environment map definitions
 #define IL_CUBEMAP_POSITIVEX 0x00000400
@@ -600,7 +603,7 @@ ILAPI void      ILAPIENTRY ilPopAttrib(void);
 ILAPI void      ILAPIENTRY ilPushAttrib(ILuint Bits);
 ILAPI void      ILAPIENTRY ilRegisterFormat(ILenum Format);
 ILAPI ILboolean ILAPIENTRY ilRegisterLoad(ILconst_string Ext, IL_LOADPROC Load);
-ILAPI ILboolean ILAPIENTRY ilRegisterMipNum(ILuint Num);
+ILAPI ILboolean ILAPIENTRY ilRegisterNumMips(ILuint Num);
 ILAPI ILboolean ILAPIENTRY ilRegisterNumFaces(ILuint Num);
 ILAPI ILboolean ILAPIENTRY ilRegisterNumImages(ILuint Num);
 ILAPI void      ILAPIENTRY ilRegisterOrigin(ILenum Origin);
@@ -629,6 +632,7 @@ ILAPI void      ILAPIENTRY ilSetWrite(fOpenWProc, fCloseWProc, fPutcProc, fSeekW
 ILAPI void      ILAPIENTRY ilShutDown(void);
 ILAPI ILboolean ILAPIENTRY ilSurfaceToDxtcData(ILenum Format);
 ILAPI ILboolean ILAPIENTRY ilTexImage(ILuint Width, ILuint Height, ILuint Depth, ILubyte NumChannels, ILenum Format, ILenum Type, void *Data);
+ILAPI ILboolean ILAPIENTRY ilTexImageSurface(ILuint Width, ILuint Height, ILuint Depth, ILubyte NumChannels, ILenum Format, ILenum Type, void *Data);
 ILAPI ILboolean ILAPIENTRY ilTexImageDxtc(ILint w, ILint h, ILint d, ILenum DxtFormat, const ILubyte* data);
 ILAPI ILenum    ILAPIENTRY ilTypeFromExt(ILconst_string FileName);
 ILAPI ILboolean ILAPIENTRY ilTypeFunc(ILenum Mode);

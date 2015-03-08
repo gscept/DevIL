@@ -217,6 +217,7 @@ void		CorrectPreMult();
 void		GetBitsFromMask(ILuint Mask, ILuint *ShiftLeft, ILuint *ShiftRight);
 ILboolean	iSaveDdsInternal(void);
 ILboolean	WriteHeader(ILimage *Image, ILenum DXTCFormat, ILuint CubeFlags);
+ILboolean	WriteExtendedHeader(ILimage *Image, ILenum DXTCFormat, ILuint CubeFlags);
 ILushort	*CompressTo565(ILimage *Image);
 ILubyte		*CompressTo88(ILimage *Image);
 ILuint		Compress(ILimage *Image, ILenum DXTCFormat);
