@@ -166,16 +166,16 @@ ILAPI ILboolean ILAPIENTRY ilTexImage_(ILimage *Image, ILuint Width, ILuint Heig
 
 //! Changes the current bound image to use these new dimensions (current data is destroyed, but mips, faces, layers and arrays are retained).
 /*! \param Width Specifies the new image width.  This cannot be 0.
-\param Height Specifies the new image height.  This cannot be 0.
-\param Depth Specifies the new image depth.  This cannot be 0.
-\param Bpp Number of channels (ex. 3 for RGB)
-\param Format Enum of the desired format.  Any format values are accepted.
-\param Type Enum of the desired type.  Any type values are accepted.
-\param Data Specifies data that should be copied to the new image. If this parameter is NULL, no data is copied, and the new image data consists of undefined values.
-\exception IL_ILLEGAL_OPERATION No currently bound image.
-\exception IL_INVALID_PARAM One of the parameters is incorrect, such as one of the dimensions being 0.
-\exception IL_OUT_OF_MEMORY Could not allocate enough memory.
-\return Boolean value of failure or success*/
+	\param Height Specifies the new image height.  This cannot be 0.
+	\param Depth Specifies the new image depth.  This cannot be 0.
+	\param NumChannels Number of channels (ex. 3 for RGB)
+	\param Format Enum of the desired format.  Any format values are accepted.
+	\param Type Enum of the desired type.  Any type values are accepted.
+	\param Data Specifies data that should be copied to the new image. If this parameter is NULL, no data is copied, and the new image data consists of undefined values.
+	\exception IL_ILLEGAL_OPERATION No currently bound image.
+	\exception IL_INVALID_PARAM One of the parameters is incorrect, such as one of the dimensions being 0.
+	\exception IL_OUT_OF_MEMORY Could not allocate enough memory.
+	\return Boolean value of failure or success*/
 ILboolean ILAPIENTRY ilTexImageSurface(ILuint Width, ILuint Height, ILuint Depth, ILubyte NumChannels, ILenum Format, ILenum Type, void *Data)
 {
 	return ilTexImageSurface_(iCurImage, Width, Height, Depth, NumChannels, Format, Type, Data);
@@ -184,6 +184,14 @@ ILboolean ILAPIENTRY ilTexImageSurface(ILuint Width, ILuint Height, ILuint Depth
 // Internal version of ilTexImageSurface.
 ILboolean ILAPIENTRY ilTexImageSurface_(ILimage *Image, ILuint Width, ILuint Height, ILuint Depth, ILubyte Bpp, ILenum Format, ILenum Type, void *Data)
 {
+	ILimage* mips;
+	ILimage* next;
+	ILimage* faces;
+	ILimage* layers;
+	ILenum flags;
+	ILenum origin;
+	ILboolean retval;
+
 	if (Image == NULL) {
 		ilSetError(IL_ILLEGAL_OPERATION);
 		return IL_FALSE;
@@ -209,14 +217,14 @@ ILboolean ILAPIENTRY ilTexImageSurface_(ILimage *Image, ILuint Width, ILuint Hei
 	return IL_FALSE;
 	}*/
 
-	ILimage* mips = Image->Mipmaps;
-	ILimage* next = Image->Next;
-	ILimage* faces = Image->Faces;
-	ILimage* layers = Image->Layers;
-	ILenum flags = Image->CubeFlags;
-	ILenum origin = Image->Origin;
+	mips = Image->Mipmaps;
+	next = Image->Next;
+	faces = Image->Faces;
+	layers = Image->Layers;
+	flags = Image->CubeFlags;
+	origin = Image->Origin;
 
-	ILboolean retval = ilInitImage(Image, Width, Height, Depth, Bpp, Format, Type, Data);
+	retval = ilInitImage(Image, Width, Height, Depth, Bpp, Format, Type, Data);
 
 	// reset our chains
 	Image->Mipmaps = mips;
