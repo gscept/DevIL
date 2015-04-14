@@ -21,8 +21,10 @@ ILAPI ILubyte ILAPIENTRY ilGetBppFormat(ILenum Format)
 	{
 		case IL_COLOUR_INDEX:
 		case IL_LUMINANCE:
+		case IL_RED:
 		case IL_ALPHA:
 			return 1;
+		case IL_RG:
 		case IL_LUMINANCE_ALPHA:
 			return 2;
 		case IL_RGB:
