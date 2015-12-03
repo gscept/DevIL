@@ -28,16 +28,15 @@
 #ifndef IL_NO_DDS
 #include "il_dds.h"
 
-
 // Global variables
-static DDSHEAD	Head;				// Image header
-static DDSEXTHEAD ExtHead;
-static ILubyte	*CompData = NULL;	// Compressed data
-static ILuint	CompSize;			// Compressed size
+thread_local DDSHEAD	Head;				// Image header
+thread_local DDSEXTHEAD ExtHead;
+thread_local ILubyte	*CompData = NULL;	// Compressed data
+thread_local ILuint	CompSize;			// Compressed size
 //static ILuint	CompFormat;			// Compressed format
-static ILimage	*Image;
-static ILint	Width, Height, Depth;
-static ILboolean	Has16BitComponents;
+thread_local ILimage	*Image;
+thread_local ILint	Width, Height, Depth;
+thread_local ILboolean	Has16BitComponents;
 
 ILuint CubemapDirections[CUBEMAP_SIDES] = {
 	DDS_CUBEMAP_POSITIVEX,
