@@ -177,12 +177,15 @@ enum PixFormat
 	PF_LUMINANCE_ALPHA,
 	PF_RXGB, //Doom3 normal maps
 	PF_A16B16G16R16,
+	PF_A16R16G16B16,
 	PF_R16F,
 	PF_G16R16F,
 	PF_A16B16G16R16F,
+	PF_A16R16B16G16F,
 	PF_R32F,
 	PF_G32R32F,
 	PF_A32B32G32R32F,
+	PF_A32R32G32B32F,
 	PF_UNKNOWN = 0xFF
 };
 
@@ -212,6 +215,7 @@ ILboolean	Decompress3Dc();
 ILboolean	DecompressAti1n();
 ILboolean	DecompressRXGB();
 ILboolean	iConvFloat16ToFloat32(ILuint* dest, ILushort* src, ILuint size);
+void		iConvHalfToFloat(ILuint* dest, ILushort* src);
 ILboolean	DecompressFloat(ILuint lCompFormat);
 void		CorrectPreMult();
 void		GetBitsFromMask(ILuint Mask, ILuint *ShiftLeft, ILuint *ShiftRight);

@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 
-ILimage *iCurImage = NULL;
+thread_local ILimage *iCurImage = NULL;
 
 
 /* Siigron: added this for Linux... a #define should work, but for some reason

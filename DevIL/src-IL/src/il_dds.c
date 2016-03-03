@@ -28,16 +28,15 @@
 #ifndef IL_NO_DDS
 #include "il_dds.h"
 
-
 // Global variables
-static DDSHEAD	Head;				// Image header
-static DDSEXTHEAD ExtHead;
-static ILubyte	*CompData = NULL;	// Compressed data
-static ILuint	CompSize;			// Compressed size
+thread_local DDSHEAD	Head;				// Image header
+thread_local DDSEXTHEAD ExtHead;
+thread_local ILubyte	*CompData = NULL;	// Compressed data
+thread_local ILuint	CompSize;			// Compressed size
 //static ILuint	CompFormat;			// Compressed format
-static ILimage	*Image;
-static ILint	Width, Height, Depth;
-static ILboolean	Has16BitComponents;
+thread_local ILimage	*Image;
+thread_local ILint	Width, Height, Depth;
+thread_local ILboolean	Has16BitComponents;
 
 ILuint CubemapDirections[CUBEMAP_SIDES] = {
 	DDS_CUBEMAP_POSITIVEX,
@@ -252,10 +251,14 @@ ILubyte iCompFormatToBpp(ILenum Format)
 		return 1;
 	//else if (Format == PF_R16F)
 	//	return 2;
-	else if (Format == PF_A16B16G16R16 || Format == PF_A16B16G16R16F
+	else if (Format == PF_A16B16G16R16
+		|| Format == PF_A16R16G16B16
+		|| Format == PF_A16B16G16R16F 
+		|| Format == PF_A16R16B16G16F
 		|| Format == PF_G32R32F)
 		return 8;
-	else if (Format == PF_A32B32G32R32F)
+	else if (Format == PF_A32B32G32R32F
+		|| Format == PF_A32R32G32B32F)
 		return 16;
 	else //if (Format == PF_G16R16F || Format == PF_R32F || dxt)
 		return 4;
@@ -266,12 +269,12 @@ ILubyte iCompFormatToBpc(ILenum Format)
 {
 	if (Has16BitComponents)
 		return 2;
-	if (Format == PF_R16F || Format == PF_G16R16F || Format == PF_A16B16G16R16F)
+	if (Format == PF_R16F || Format == PF_G16R16F || Format == PF_A16B16G16R16F || Format == PF_A16R16B16G16F)
 		//DevIL has no internal half type, so these formats are converted to 32 bits
 		return 4;
-	else if (Format == PF_R32F || Format == PF_R16F || Format == PF_G32R32F || Format == PF_A32B32G32R32F)
+	else if (Format == PF_R32F || Format == PF_R16F || Format == PF_G32R32F || Format == PF_A32B32G32R32F || Format == PF_A32R32G32B32F)
 		return 4;
-	else if(Format == PF_A16B16G16R16)
+	else if (Format == PF_A16B16G16R16 || Format == PF_A16R16G16B16)
 		return 2;
 	else
 		return 1;
@@ -297,6 +300,7 @@ ILboolean iLoadDdsCubemapInternal(ILuint CompFormat)
 {
 	ILuint	i;
 	ILubyte	Bpp, Channels, Bpc;
+	ILuint	BaseCompSize = CompSize;
 	ILimage *startImage;
 
 	CompData = NULL;
@@ -315,6 +319,7 @@ ILboolean iLoadDdsCubemapInternal(ILuint CompFormat)
 		Width = Head.Width;
 		Height = Head.Height;
 		Depth = Head.Depth;
+		CompSize = BaseCompSize;
 		if (Head.ddsCaps2 & CubemapDirections[i]) {
 			if (i != 0) {
 				Image->Faces = ilNewImage(Width, Height, Depth, Channels, Bpc);
@@ -326,9 +331,11 @@ ILboolean iLoadDdsCubemapInternal(ILuint CompFormat)
 				if (CompFormat == PF_R16F
 					|| CompFormat == PF_G16R16F
 					|| CompFormat == PF_A16B16G16R16F
+					|| CompFormat == PF_A16R16B16G16F
 					|| CompFormat == PF_R32F
 					|| CompFormat == PF_G32R32F
-					|| CompFormat == PF_A32B32G32R32F) {
+					|| CompFormat == PF_A32B32G32R32F
+					|| CompFormat == PF_A32R32G32B32F) {
 					// DevIL's format autodetection doesn't work for
 					//  float images...correct this.
 					Image->Type = IL_FLOAT;
@@ -415,6 +422,7 @@ ILboolean iLoadDdsInternal()
 		return IL_FALSE;
 	}
 	Check16BitComponents(&Head);
+	CompSize = BlockSize;
 
 	// Microsoft bug, they're not following their own documentation.
 	if (!(Head.Flags1 & (DDS_LINEARSIZE | DDS_PITCH))
@@ -521,7 +529,8 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 				break;
 
 			case IL_MAKEFOURCC('$', '\0', '\0', '\0'):
-				*CompFormat = PF_A16B16G16R16;
+			case IL_MAKEFOURCC('n', '\0', '\0', '\0'):
+				*CompFormat = PF_A16R16G16B16;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 8;
 				break;
 
@@ -536,7 +545,7 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 				break;
 
 			case IL_MAKEFOURCC('q', '\0', '\0', '\0'):
-				*CompFormat = PF_A16B16G16R16F;
+				*CompFormat = PF_A16R16B16G16F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 8;
 				break;
 
@@ -551,7 +560,7 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 				break;
 
 			case IL_MAKEFOURCC('t', '\0', '\0', '\0'):
-				*CompFormat = PF_A32B32G32R32F;
+				*CompFormat = PF_A32R32G32B32F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 16;
 				break;
 
@@ -709,12 +718,15 @@ void AdjustVolumeTexture(DDSHEAD *Head, ILuint CompFormat)
 			break;
 
 		case PF_A16B16G16R16:
+		case PF_A16R16G16B16:
 		case PF_R16F:
 		case PF_G16R16F:
 		case PF_A16B16G16R16F:
+		case PF_A16R16B16G16F:
 		case PF_R32F:
 		case PF_G32R32F:
 		case PF_A32B32G32R32F:
+		case PF_A32R32G32B32F:
 			Head->LinearSize = IL_MAX(1,Head->Width) * IL_MAX(1,Head->Height) *
 				iCompFormatToBpp(CompFormat);
 			break;
@@ -741,13 +753,12 @@ ILboolean ReadData()
 
 	if (Head.Flags1 & DDS_LINEARSIZE) {
 		//Head.LinearSize = Head.LinearSize * Depth;
-
-		CompData = (ILubyte*)ialloc(Head.LinearSize);
+		CompData = (ILubyte*)ialloc(CompSize);
 		if (CompData == NULL) {
 			return IL_FALSE;
 		}
 
-		if (iread(CompData, 1, Head.LinearSize) != (ILuint)Head.LinearSize) {
+		if (iread(CompData, 1, CompSize) != (ILuint)CompSize) {
 			ifree(CompData);
 			CompData = NULL;
 			return IL_FALSE;
@@ -825,6 +836,7 @@ ILboolean AllocImage(ILuint CompFormat)
 			break;
 
 		case PF_A16B16G16R16:
+		case PF_A16R16G16B16:
 			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
 				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_UNSIGNED_SHORT, NULL))
 				return IL_FALSE;
@@ -833,9 +845,11 @@ ILboolean AllocImage(ILuint CompFormat)
 		case PF_R16F:
 		case PF_G16R16F:
 		case PF_A16B16G16R16F:
+		case PF_A16R16B16G16F:
 		case PF_R32F:
 		case PF_G32R32F:
 		case PF_A32B32G32R32F:
+		case PF_A32R32G32B32F:
 			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
 				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_FLOAT, NULL))
 				return IL_FALSE;
@@ -936,6 +950,7 @@ ILboolean DdsDecompress(ILuint CompFormat)
 		case PF_RXGB:
 			return DecompressRXGB();
 
+		case PF_A16R16G16B16:
 		case PF_A16B16G16R16:
 			memcpy(Image->Data, CompData, Image->SizeOfData);
 			return IL_TRUE;
@@ -943,9 +958,11 @@ ILboolean DdsDecompress(ILuint CompFormat)
 		case PF_R16F:
 		case PF_G16R16F:
 		case PF_A16B16G16R16F:
+		case PF_A16R16B16G16F:
 		case PF_R32F:
 		case PF_G32R32F:
 		case PF_A32B32G32R32F:
+		case PF_A32R32G32B32F:
 			return DecompressFloat(CompFormat);
 
 		case PF_UNKNOWN:
@@ -1041,18 +1058,21 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 			if (CompFormat == PF_R16F
 				|| CompFormat == PF_G16R16F
 				|| CompFormat == PF_A16B16G16R16F
+				|| CompFormat == PF_A16R16B16G16F
 				|| CompFormat == PF_R32F
 				|| CompFormat == PF_G32R32F
-				|| CompFormat == PF_A32B32G32R32F) {
-				Head.LinearSize = Width * Height * Depth * Bpp;
+				|| CompFormat == PF_A32B32G32R32F
+				|| CompFormat == PF_A32R32G32B32F) {
+				CompSize = Width * Height * Depth * Bpp;
 
 				//DevIL's format autodetection doesn't work for
 				//float images...correct this
 				Image->Type = IL_FLOAT;
 				Image->Bpp = Channels;
 			}
-			else if (CompFormat == PF_A16B16G16R16)
-				Head.LinearSize = Width * Height * Depth * Bpp;
+			else if (CompFormat == PF_A16B16G16R16
+					|| CompFormat == PF_A16R16G16B16)
+				CompSize = Width * Height * Depth * Bpp;
 			else if (CompFormat != PF_RGB && CompFormat != PF_ARGB
 				&& CompFormat != PF_LUMINANCE
 				&& CompFormat != PF_LUMINANCE_ALPHA) {
@@ -1060,13 +1080,13 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 				//compressed format
 				minW = (((Width+3)/4))*4;
 				minH = (((Height+3)/4))*4;
-				Head.LinearSize = (minW * minH * Depth * Bpp) / CompFactor;
+				CompSize = (minW * minH * Depth * Bpp) / CompFactor;
 
 				isCompressed = IL_TRUE;
 			}
 			else {
 				//don't use Bpp to support argb images with less than 32 bits
-				Head.LinearSize = Width * Height * Depth * (Head.RGBBitCount >> 3);
+				CompSize = Width * Height * Depth * Bpp;
 			}
 		}
 		else {
@@ -1801,6 +1821,10 @@ ILboolean iConvFloat16ToFloat32(ILuint* dest, ILushort* src, ILuint size)
 	return IL_TRUE;
 }
 
+void iConvHalfToFloat(ILuint* dest, ILushort* src)
+{
+	*dest = halfToFloat(*src);
+}
 
 // Same as iConvFloat16ToFloat32, but we have to set the blue channel to 1.0f.
 //  The destination format is RGB, and the source is R16G16 (little endian).
@@ -1851,25 +1875,65 @@ ILboolean DecompressFloat(ILuint lCompFormat)
 			}
 			return IL_TRUE;
 		case PF_A32B32G32R32F:  // Direct copy of float RGBA data
-			memcpy(Image->Data, CompData, Image->SizeOfData);
+			Size = Image->Width * Image->Height * Image->Depth * 4;
+			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
+				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j+2];
+				((ILfloat*)Image->Data)[i + 1] = ((ILfloat*)CompData)[j+1];
+				((ILfloat*)Image->Data)[i + 2] = ((ILfloat*)CompData)[j];
+				((ILfloat*)Image->Data)[i + 3] = ((ILfloat*)CompData)[j + 3];
+			}
+			return IL_TRUE;
+		case PF_A32R32G32B32F:  // Direct copy of float RGBA data
+			Size = Image->Width * Image->Height * Image->Depth * 4;
+			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
+				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
+				((ILfloat*)Image->Data)[i + 1] = ((ILfloat*)CompData)[j + 1];
+				((ILfloat*)Image->Data)[i + 2] = ((ILfloat*)CompData)[j + 2];
+				((ILfloat*)Image->Data)[i + 3] = ((ILfloat*)CompData)[j + 3];
+			}
 			return IL_TRUE;
 		case PF_G32R32F:  // Red float, green float, blue = max
 			Size = Image->Width * Image->Height * Image->Depth * 3;
 			for (i = 0, j = 0; i < Size; i += 3, j += 2) {
-				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
-				((ILfloat*)Image->Data)[i+1] = ((ILfloat*)CompData)[j+1];
+				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j+1];
+				((ILfloat*)Image->Data)[i+1] = ((ILfloat*)CompData)[j];
 				((ILfloat*)Image->Data)[i+2] = 1.0f;
 			}
 			return IL_TRUE;
 		case PF_R16F:  // Red float, green = blue = max
-			return iConvR16ToFloat32((ILuint*)Image->Data, (ILushort*)CompData,
-				Image->Width * Image->Height * Image->Depth * Image->Bpp);
+			Size = Image->Width * Image->Height * Image->Depth * 3;
+			for (i = 0, j = 0; i < Size; i += 3, j++) {
+				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j);
+				((ILfloat*)Image->Data)[i + 1] = 1.0f;
+				((ILfloat*)Image->Data)[i + 2] = 1.0f;
+			}
+			return IL_TRUE;
 		case PF_A16B16G16R16F:  // Just convert from half to float.
-			return iConvFloat16ToFloat32((ILuint*)Image->Data, (ILushort*)CompData,
-				Image->Width * Image->Height * Image->Depth * Image->Bpp);
+			Size = Image->Width * Image->Height * Image->Depth * 4;
+			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
+				iConvHalfToFloat((ILuint*)(Image->Data)+i,		(ILushort*)(CompData)+j+2);
+				iConvHalfToFloat((ILuint*)(Image->Data)+i+1,	(ILushort*)(CompData)+j+1);
+				iConvHalfToFloat((ILuint*)(Image->Data)+i+2,	(ILushort*)(CompData)+j);
+				((ILfloat*)Image->Data)[i + 3] = 1.0f;
+			}
+			return IL_TRUE;
+		case PF_A16R16B16G16F:  // Just convert from half to float.
+			Size = Image->Width * Image->Height * Image->Depth * 4;
+			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
+				iConvHalfToFloat((ILuint*)(Image->Data)+i, (ILushort*)(CompData)+j);
+				iConvHalfToFloat((ILuint*)(Image->Data)+i+1, (ILushort*)(CompData)+j+1);
+				iConvHalfToFloat((ILuint*)(Image->Data)+i+2, (ILushort*)(CompData)+j+2);
+				((ILfloat*)Image->Data)[i + 3] = 1.0f;
+			}
+			return IL_TRUE;
 		case PF_G16R16F:  // Convert from half to float, set blue = max.
-			return iConvG16R16ToFloat32((ILuint*)Image->Data, (ILushort*)CompData,
-				Image->Width * Image->Height * Image->Depth * Image->Bpp);
+			Size = Image->Width * Image->Height * Image->Depth * 3;
+			for (i = 0, j = 0; i < Size; i += 3, j += 2) {
+				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j + 1);
+				iConvHalfToFloat((ILuint*)(Image->Data) + i + 1,	(ILushort*)(CompData) + j);
+				((ILfloat*)Image->Data)[i + 2] = 1.0f;
+			}
+			return IL_TRUE;
 		default:
 			return IL_FALSE;
 	}

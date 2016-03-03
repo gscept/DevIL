@@ -24,6 +24,12 @@
 	#include <IL/config.h>
 #endif
 
+#if _WIN32
+#define thread_local __declspec(thread)
+#else
+#define thread_local __thread
+#endif
+
 // Standard headers
 #include <stdlib.h>
 #include <stdio.h>
@@ -123,7 +129,7 @@ extern "C" {
 		#undef USE_WIN32_ASM
 	#endif
 #endif
-extern ILimage *iCurImage;
+thread_local extern ILimage *iCurImage;
 #define BIT_0	0x00000001
 #define BIT_1	0x00000002
 #define BIT_2	0x00000004
