@@ -60,6 +60,7 @@ typedef struct IL_STATES
 	ILboolean	ilKeepDxtcData;
 	ILboolean	ilUseNVidiaDXT;
 	ILboolean	ilUseSquishDXT;
+	ILboolean	ilDxtcNoDecompress;
 
 
 	//

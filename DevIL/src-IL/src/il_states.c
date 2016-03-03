@@ -440,6 +440,9 @@ void ILAPIENTRY ilGetIntegerv(ILenum Mode, ILint *Param)
 		case IL_KEEP_DXTC_DATA:
 			*Param = ilStates[ilCurrentPos].ilKeepDxtcData;
 			break;
+		case IL_DXTC_NO_DECOMPRESS:
+			*Param = ilStates[ilCurrentPos].ilDxtcNoDecompress;
+			break;
 		case IL_ORIGIN_MODE:
 			*Param = ilStates[ilCurrentPos].ilOriginMode;
 			break;
@@ -1034,6 +1037,12 @@ void ILAPIENTRY ilSetInteger(ILenum Mode, ILint Param)
 		case IL_KEEP_DXTC_DATA:
 			if (Param == IL_FALSE || Param == IL_TRUE) {
 				ilStates[ilCurrentPos].ilKeepDxtcData = Param;
+				return;
+			}
+			break;
+		case IL_DXTC_NO_DECOMPRESS:
+			if (Param == IL_FALSE || Param == IL_TRUE) {
+				ilStates[ilCurrentPos].ilDxtcNoDecompress = Param;
 				return;
 			}
 			break;

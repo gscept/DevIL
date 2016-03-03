@@ -850,11 +850,11 @@ ILboolean AllocImage(ILuint CompFormat)
 			if (!ilTexImage(Width, Height, Depth, channels, format, IL_UNSIGNED_BYTE, NULL))
 				return IL_FALSE;
 			if (ilGetInteger(IL_KEEP_DXTC_DATA) == IL_TRUE && CompData) {
-				iCurImage->DxtcData = (ILubyte*)ialloc(Head.LinearSize);
+				iCurImage->DxtcData = (ILubyte*)ialloc(CompSize);
 				if (iCurImage->DxtcData == NULL)
 					return IL_FALSE;
 				iCurImage->DxtcFormat = CompFormat - PF_DXT1 + IL_DXT1;
-				iCurImage->DxtcSize = Head.LinearSize;
+				iCurImage->DxtcSize = CompSize;
 				memcpy(iCurImage->DxtcData, CompData, iCurImage->DxtcSize);
 			}
 			break;
@@ -882,8 +882,23 @@ ILboolean AllocImage(ILuint CompFormat)
  */
 ILboolean DdsDecompress(ILuint CompFormat)
 {
-	switch (CompFormat)
+	if (ilGetInteger(IL_DXTC_NO_DECOMPRESS) == IL_TRUE && CompData)
 	{
+		if (Image->Data) {
+			ifree(Image->Data);
+		}
+		Image->Data = (ILubyte*)ialloc(CompSize);
+		Image->Format = CompFormat - PF_DXT1 + IL_DXT1;
+		Image->SizeOfData = CompSize;
+		Image->Bpc = iCompFormatToBpc(CompFormat);
+		Image->Bpp = iCompFormatToChannelCount(CompFormat);
+		memcpy(Image->Data, CompData, CompSize);
+		return IL_TRUE;
+	}
+	else
+	{
+		switch (CompFormat)
+		{
 		case PF_ARGB:
 		case PF_RGB:
 		case PF_LUMINANCE:
@@ -935,8 +950,8 @@ ILboolean DdsDecompress(ILuint CompFormat)
 
 		case PF_UNKNOWN:
 			return IL_FALSE;
+		}
 	}
-
 	return IL_FALSE;
 }
 
@@ -1062,11 +1077,11 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 			goto mip_fail;
 
 		if (ilGetInteger(IL_KEEP_DXTC_DATA) == IL_TRUE && isCompressed == IL_TRUE && CompData) {
-			Image->DxtcData = (ILubyte*)ialloc(Head.LinearSize);
+			Image->DxtcData = (ILubyte*)ialloc(CompSize);
 			if (Image->DxtcData == NULL)
 				return IL_FALSE;
 			Image->DxtcFormat = CompFormat - PF_DXT1 + IL_DXT1;
-			Image->DxtcSize = Head.LinearSize;
+			Image->DxtcSize = CompSize;
 			memcpy(Image->DxtcData, CompData, Image->DxtcSize);
 		}
 

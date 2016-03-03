@@ -382,27 +382,29 @@ typedef long long unsigned int ILuint64;
 
 
 // DXTC definitions
-#define IL_DXTC_FORMAT      0x0705
-#define IL_DXT1             0x0706
-#define IL_DXT2             0x0707
-#define IL_DXT3             0x0708
-#define IL_DXT4             0x0709
-#define IL_DXT5             0x070A
-#define IL_DXT_NO_COMP      0x070B
-#define IL_KEEP_DXTC_DATA   0x070C
-#define IL_DXTC_DATA_FORMAT 0x070D
-#define IL_3DC              0x070E
-#define IL_RXGB             0x070F
-#define IL_ATI1N            0x07A0
-#define IL_DXT1A            0x07A1  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
+#define IL_DXTC_FORMAT			0x0705
+#define IL_DXT1					0x0706
+#define IL_DXT2					0x0707
+#define IL_DXT3					0x0708
+#define IL_DXT4					0x0709
+#define IL_DXT5					0x070A
+#define IL_DXT1A_sRGB			0x070B
+#define IL_DXT3_sRGB			0x070C
+#define IL_DXT5_sRGB			0x070D
+#define IL_BPTC					0x070E
+#define IL_BPTC_sRGB			0x070F
+#define IL_DXGI_UNCOMPRESSED	0x07A0	// DXGI format, but not compressed
+#define IL_DXT_NO_COMP			0x07A1	// standard DXT format, but uncompressed
+#define IL_KEEP_DXTC_DATA		0x07A2
+#define IL_DXTC_DATA_FORMAT		0x07A3
+#define IL_DXTC_NO_DECOMPRESS	0x07A4
+#define IL_3DC					0x07A5
+#define IL_RXGB					0x07A6
+#define IL_ATI1N				0x07A7
+#define IL_DXT1A				0x07A8  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
 
-// DXGI formats
-#define IL_DXT1A_sRGB		0x07A2
-#define IL_DXT3_sRGB		0x07A3
-#define IL_DXT5_sRGB		0x07A4
-#define IL_BPTC				0x07A5
-#define IL_BPTC_sRGB		0x07A6
-#define IL_DXGI_UNCOMPRESSED 0x07A7
+
+
 
 // Environment map definitions
 #define IL_CUBEMAP_POSITIVEX 0x00000400
