@@ -906,6 +906,7 @@ ILboolean DdsDecompress(ILuint CompFormat)
 		Image->SizeOfData = CompSize;
 		Image->Bpc = iCompFormatToBpc(CompFormat);
 		Image->Bpp = iCompFormatToChannelCount(CompFormat);
+		ilSetInteger(IL_PIXEL_FORMAT, CompFormat);
 		memcpy(Image->Data, CompData, CompSize);
 		return IL_TRUE;
 	}

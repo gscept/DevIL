@@ -61,6 +61,7 @@ typedef struct IL_STATES
 	ILboolean	ilUseNVidiaDXT;
 	ILboolean	ilUseSquishDXT;
 	ILboolean	ilDxtcNoDecompress;
+	ILenum		ilPixelFormat;
 
 
 	//

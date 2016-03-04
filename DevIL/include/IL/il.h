@@ -402,7 +402,7 @@ typedef long long unsigned int ILuint64;
 #define IL_RXGB					0x07A6
 #define IL_ATI1N				0x07A7
 #define IL_DXT1A				0x07A8  // Normally the same as IL_DXT1, except for nVidia Texture Tools.
-
+#define IL_PIXEL_FORMAT			0x07A9
 
 
 

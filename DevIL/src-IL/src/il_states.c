@@ -91,7 +91,7 @@ void ilDefaultStates()
 	ilStates[ilCurrentPos].ilKeepDxtcData = IL_FALSE;
 	ilStates[ilCurrentPos].ilUseNVidiaDXT = IL_FALSE;
 	ilStates[ilCurrentPos].ilUseSquishDXT = IL_FALSE;
-
+	ilStates[ilCurrentPos].ilPixelFormat = 0xFF;
 
 
 
@@ -442,6 +442,9 @@ void ILAPIENTRY ilGetIntegerv(ILenum Mode, ILint *Param)
 			break;
 		case IL_DXTC_NO_DECOMPRESS:
 			*Param = ilStates[ilCurrentPos].ilDxtcNoDecompress;
+			break;
+		case IL_PIXEL_FORMAT:
+			*Param = ilStates[ilCurrentPos].ilPixelFormat;
 			break;
 		case IL_ORIGIN_MODE:
 			*Param = ilStates[ilCurrentPos].ilOriginMode;
@@ -1043,6 +1046,12 @@ void ILAPIENTRY ilSetInteger(ILenum Mode, ILint Param)
 		case IL_DXTC_NO_DECOMPRESS:
 			if (Param == IL_FALSE || Param == IL_TRUE) {
 				ilStates[ilCurrentPos].ilDxtcNoDecompress = Param;
+				return;
+			}
+			break;
+		case IL_PIXEL_FORMAT:
+			if (Param >= 0 && Param <= 256) {
+				ilStates[ilCurrentPos].ilPixelFormat = Param;
 				return;
 			}
 			break;
