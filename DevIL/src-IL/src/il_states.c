@@ -626,18 +626,22 @@ void ILAPIENTRY iGetIntegervImage(ILimage *Image, ILenum Mode, ILint *Param)
             *Param = Image->Width;
             break;
         case IL_NUM_FACES:
+			(*Param)++;
             for (SubImage = Image->Faces; SubImage; SubImage = SubImage->Faces)
                 (*Param)++;
             break;
         case IL_NUM_IMAGES:
+			(*Param)++;
             for (SubImage = Image->Next; SubImage; SubImage = SubImage->Next)
                 (*Param)++;
             break;
         case IL_NUM_LAYERS:
+			(*Param)++;
             for (SubImage = Image->Layers; SubImage; SubImage = SubImage->Layers)
                 (*Param)++;
             break;
         case IL_NUM_MIPMAPS:
+			(*Param)++;
 			for (SubImage = Image->Mipmaps; SubImage; SubImage = SubImage->Mipmaps)
                 (*Param)++;
             break;
