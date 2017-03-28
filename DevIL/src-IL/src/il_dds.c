@@ -2237,8 +2237,7 @@ ILAPI ILboolean ILAPIENTRY ilDxtcDataToSurface()
 		return IL_FALSE;
 	}
 
-	if (!(iCurImage->DxtcFormat == IL_DXT1 || iCurImage->DxtcFormat == IL_DXT3
-		|| iCurImage->DxtcFormat == IL_DXT5)) {
+	if (!(iCurImage->DxtcFormat >= IL_DXT1 || iCurImage->DxtcFormat <= IL_BPTC_sRGB)) {
 		ilSetError(IL_INVALID_PARAM); //TODO
 		return IL_FALSE;
 	}
@@ -2270,8 +2269,13 @@ ILAPI ILboolean ILAPIENTRY ilDxtcDataToSurface()
 	switch(iCurImage->DxtcFormat)
 	{
 		case IL_DXT1: CompFormat = PF_DXT1; break;
+		case IL_DXT1A_sRGB: CompFormat = PF_DXT1_sRGB; break;
 		case IL_DXT3: CompFormat = PF_DXT3; break;
+		case IL_DXT3_sRGB: CompFormat = PF_DXT3_sRGB; break;
 		case IL_DXT5: CompFormat = PF_DXT5; break;
+		case IL_DXT5_sRGB: CompFormat = PF_DXT5_sRGB; break;
+		case IL_BPTC: CompFormat = PF_BC7; break;
+		case IL_BPTC_sRGB: CompFormat = PF_BC7_sRGB; break;
 	}
 	CompData = iCurImage->DxtcData;
 	DdsDecompress(CompFormat); //globals suck...fix this
