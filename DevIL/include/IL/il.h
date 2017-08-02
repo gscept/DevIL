@@ -87,6 +87,7 @@ typedef float          ILfloat;
 typedef float          ILclampf;
 typedef double         ILdouble;
 typedef double         ILclampd;
+typedef ptrdiff_t	   ILptrdiff;
 
 #ifdef _MSC_VER
 typedef __int64          ILint64;
