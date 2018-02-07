@@ -1079,13 +1079,13 @@ ILboolean ilFixImage()
 	ILuint NumLayers, k;
 
 	NumImages = ilGetInteger(IL_NUM_IMAGES);
-	for (i = 0; i <= NumImages; i++) {
+	for (i = 0; i < NumImages; i++) {
 		ilBindImage(ilGetCurName());  // Set to parent image first.
 		if (!ilActiveImage(i))
 			return IL_FALSE;
 
 		NumFaces = ilGetInteger(IL_NUM_FACES);
-		for (f = 0; f <= NumFaces; f++) {
+		for (f = 0; f < NumFaces; f++) {
 			ilBindImage(ilGetCurName());  // Set to parent image first.
 			if (!ilActiveImage(i))
 				return IL_FALSE;
@@ -1093,7 +1093,7 @@ ILboolean ilFixImage()
 				return IL_FALSE;
 
 			NumLayers = ilGetInteger(IL_NUM_LAYERS);
-			for (k = 0; k <= NumLayers; k++) {
+			for (k = 0; k < NumLayers; k++) {
 				ilBindImage(ilGetCurName());  // Set to parent image first.
 				if (!ilActiveImage(i))
 					return IL_FALSE;
@@ -1103,7 +1103,7 @@ ILboolean ilFixImage()
 					return IL_FALSE;
 
 				NumMipmaps = ilGetInteger(IL_NUM_MIPMAPS);
-				for (j = 0; j <= NumMipmaps; j++) {
+				for (j = 0; j < NumMipmaps; j++) {
 					ilBindImage(ilGetCurName());	// Set to parent image first.
 					if (!ilActiveImage(i))
 						return IL_FALSE;

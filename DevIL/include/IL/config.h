@@ -15,7 +15,7 @@
 // #define IL_NO_DDS
  #define IL_NO_DICOM
  #define IL_NO_DOOM
- #define IL_NO_EXR
+// #define IL_NO_EXR
  #define IL_NO_FITS
  #define IL_NO_FTX
  #define IL_NO_GIF
@@ -24,7 +24,7 @@
  #define IL_NO_ICNS
  #define IL_NO_IWI
  #define IL_NO_JP2
-// #define IL_NO_JPG
+ #define IL_NO_JPG
  #define IL_NO_LCMS
  #define IL_NO_LIF
  #define IL_NO_MDL
@@ -33,7 +33,7 @@
  #define IL_NO_PCX
  #define IL_NO_PIC
  #define IL_NO_PIX
-// #define IL_NO_PNG
+ #define IL_NO_PNG
  #define IL_NO_PNM
 // #define IL_NO_PSD
  #define IL_NO_PSP
@@ -48,12 +48,13 @@
  #define IL_NO_WAL
  #define IL_NO_WDP
  #define IL_NO_XPM
+ #define IL_NO_UTX
 
 #define IL_USE_JPEGLIB_UNMODIFIED 1
 //#define IL_USE_DXTC_NVIDIA
 //#define IL_USE_DXTC_SQUISH
 
-#define IL_NO_GAMES
+//#define IL_NO_GAMES
 
 /* Supported api (ilut) */
 

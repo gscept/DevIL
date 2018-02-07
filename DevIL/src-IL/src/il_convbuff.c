@@ -41,7 +41,7 @@ ILAPI void* ILAPIENTRY ilConvertBuffer(ILuint SizeOfData, ILenum SrcFormat, ILen
 	ILfloat		Resultf;
 	ILdouble	Resultd;
 	ILuint		NumPix;  // Really number of pixels * bpp.
-	ILuint		BpcDest;
+	ILuint		BpcDest, SrcDest;
 	void		*Data = NULL;
 	ILimage		*PalImage = NULL, *TempImage = NULL;
 
@@ -54,19 +54,12 @@ ILAPI void* ILAPIENTRY ilConvertBuffer(ILuint SizeOfData, ILenum SrcFormat, ILen
 	if (Data == NULL)
 		return NULL;
 
+	SrcDest = ilGetBpcType(SrcType);
 	BpcDest = ilGetBpcType(DestType);
 	NumPix = SizeOfData / ilGetBpcType(SrcType);
 
 	if (DestFormat == SrcFormat) {
-		NewData = (ILubyte*)ialloc(NumPix * BpcDest);
-		if (NewData == NULL) {
-			return IL_FALSE;
-		}
-		memcpy(NewData, Data, NumPix * BpcDest);
-		if (Data != Buffer)
-			ifree(Data);
-
-		return NewData;
+		return Data;
 	}
 
 	// Colour-indexed images are special here

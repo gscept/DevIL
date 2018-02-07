@@ -15,7 +15,6 @@
 #define EXR_H
 
 #include "il_internal.h"
-#include <ImfIO.h>
 
 
 //using namespace Imf;  // Using this leads to errors with Microsoft's IStream.
@@ -44,6 +43,8 @@ typedef struct EXRHEAD
 
 
 #ifdef __cplusplus
+#include <ImfIO.h>
+
 extern "C" {
 #endif
 

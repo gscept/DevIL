@@ -18,15 +18,9 @@ SET(DEVIL_INCS
 	${DEVIL_SOURCE_DIR}/include/IL/ilut.h
 )
 
-SUBDIRS(
-#	src-XTRA
-	src-IL
-	src-ILU
-	src-ILUT
-
-#	examples
-)
-
+ADD_SUBDIRECTORY(src-IL)
+ADD_SUBDIRECTORY(src-ILU)
+ADD_SUBDIRECTORY(src-ILUT)
 
 # need to check for vc6 or vc2003 output dir
 IF(BUILD_SHARED_LIBS)
