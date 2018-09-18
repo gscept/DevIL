@@ -72,6 +72,8 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
 
 typedef unsigned int   ILenum;
 typedef unsigned char  ILboolean;
@@ -87,7 +89,7 @@ typedef float          ILfloat;
 typedef float          ILclampf;
 typedef double         ILdouble;
 typedef double         ILclampd;
-typedef ptrdiff_t	   ILptrdiff;
+typedef ptrdiff_t      ILptrdiff;
 
 #ifdef _MSC_VER
 typedef __int64          ILint64;

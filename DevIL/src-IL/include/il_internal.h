@@ -129,7 +129,7 @@ extern "C" {
 		#undef USE_WIN32_ASM
 	#endif
 #endif
-thread_local extern ILimage *iCurImage;
+extern thread_local ILimage *iCurImage;
 #define BIT_0	0x00000001
 #define BIT_1	0x00000002
 #define BIT_2	0x00000004
