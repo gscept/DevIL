@@ -25,8 +25,8 @@
 #endif
 
 
-// only defined thread_local if not building with c++11
-#if __cplusplus <= 199711L
+// only define thread_local if not building with c++11
+#ifndef __cplusplus
 	#if _WIN32
 		#define thread_local __declspec(thread)
 	#else
