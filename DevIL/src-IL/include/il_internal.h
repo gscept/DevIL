@@ -24,10 +24,14 @@
 	#include <IL/config.h>
 #endif
 
-#if _WIN32
-#define thread_local __declspec(thread)
-#else
-#define thread_local __thread
+
+// only defined thread_local if not building with c++11
+#if __cplusplus < 199711L
+	#if _WIN32
+		#define thread_local __declspec(thread)
+	#else
+		#define thread_local __thread
+	#endif
 #endif
 
 // Standard headers
