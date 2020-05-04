@@ -37,6 +37,7 @@ thread_local ILuint	CompSize;			// Compressed size
 thread_local ILimage	*Image;
 thread_local ILint	Width, Height, Depth;
 thread_local ILboolean	Has16BitComponents;
+thread_local ILboolean	DecompressRGBA;
 
 ILuint CubemapDirections[CUBEMAP_SIDES] = {
 	DDS_CUBEMAP_POSITIVEX,
@@ -241,25 +242,29 @@ void Check16BitComponents(DDSHEAD *Header)
 ILubyte iCompFormatToBpp(ILenum Format)
 {
 	//non-compressed (= non-FOURCC) codes
-	if (Format == PF_LUMINANCE || Format == PF_LUMINANCE_ALPHA || Format == PF_ARGB)
+	if (Format == PF_LUMINANCE || Format == PF_LUMINANCE_ALPHA || Format == PF_RGBA || Format == PF_BGRA || Format == PF_SRGB)
 		return Head.RGBBitCount/8;
 
 	//fourcc formats
-	else if (Format == PF_RGB || Format == PF_3DC || Format == PF_RXGB)
+	else if (Format == PF_RGB || Format == PF_BGR || Format == PF_3DC || Format == PF_RXGB)
 		return 3;
-	else if (Format == PF_ATI1N)
+	else if (Format == PF_ATI1N
+		|| Format == PF_R8)
 		return 1;
-	//else if (Format == PF_R16F)
-	//	return 2;
-	else if (Format == PF_A16B16G16R16
-		|| Format == PF_A16R16G16B16
-		|| Format == PF_A16B16G16R16F 
-		|| Format == PF_A16R16B16G16F
-		|| Format == PF_G32R32F)
+	else if (Format == PF_R16F
+		|| Format == PF_R16)
+		return 2;
+	else if (Format == PF_R16G16B16A16
+		|| Format == PF_R16G16B16A16F
+		|| Format == PF_R32G32
+		|| Format == PF_R32G32F)
 		return 8;
-	else if (Format == PF_A32B32G32R32F
-		|| Format == PF_A32R32G32B32F)
+	else if (Format == PF_R32G32B32A32F
+		|| Format == PF_R32G32B32A32)
 		return 16;
+	else if (Format == PF_R32G32B32F
+		|| Format == PF_R32G32B32)
+		return 12;
 	else //if (Format == PF_G16R16F || Format == PF_R32F || dxt)
 		return 4;
 }
@@ -269,12 +274,12 @@ ILubyte iCompFormatToBpc(ILenum Format)
 {
 	if (Has16BitComponents)
 		return 2;
-	if (Format == PF_R16F || Format == PF_G16R16F || Format == PF_A16B16G16R16F || Format == PF_A16R16B16G16F)
-		//DevIL has no internal half type, so these formats are converted to 32 bits
+	if (Format == PF_R16F || Format == PF_R16G16F || Format == PF_R16G16B16A16F)
+		//DevIL has no internal half float type, so these formats are converted to 32 bits
 		return 4;
-	else if (Format == PF_R32F || Format == PF_R16F || Format == PF_G32R32F || Format == PF_A32B32G32R32F || Format == PF_A32R32G32B32F)
+	else if (Format == PF_R32F || Format == PF_R32G32F || Format == PF_R32G32B32F || Format == PF_R32G32B32A32F)
 		return 4;
-	else if (Format == PF_A16B16G16R16 || Format == PF_A16R16G16B16)
+	else if (Format == PF_R16 || Format == PF_R16G16 || Format == PF_R16G16B16A16)
 		return 2;
 	else
 		return 1;
@@ -285,13 +290,18 @@ ILubyte iCompFormatToChannelCount(ILenum Format)
 {
 	if (Format == PF_RGB || Format == PF_3DC || Format == PF_RXGB)
 		return 3;
-	else if (Format == PF_LUMINANCE || /*Format == PF_R16F || Format == PF_R32F ||*/ Format == PF_ATI1N)
+	else if (Format == PF_LUMINANCE 
+		|| Format == PF_R16F 
+		|| Format == PF_R32F 
+		|| Format == PF_R16
+		|| Format == PF_R32
+		|| Format == PF_ATI1N)
 		return 1;
 	else if (Format == PF_LUMINANCE_ALPHA /*|| Format == PF_G16R16F || Format == PF_G32R32F*/)
 		return 2;
-	else if (Format == PF_G16R16F || Format == PF_G32R32F || Format == PF_R32F || Format == PF_R16F)
-		return 3;
-	else //if(Format == PF_ARGB || dxt)
+	else if (Format == PF_R16G16F || Format == PF_R32G32F)
+		return 2;
+	else //if(Format == PF_RGBA || dxt)
 		return 4;
 }
 
@@ -329,13 +339,11 @@ ILboolean iLoadDdsCubemapInternal(ILuint CompFormat)
 				Image = Image->Faces;
 
 				if (CompFormat == PF_R16F
-					|| CompFormat == PF_G16R16F
-					|| CompFormat == PF_A16B16G16R16F
-					|| CompFormat == PF_A16R16B16G16F
+					|| CompFormat == PF_R16G16F
+					|| CompFormat == PF_R16G16B16A16F
 					|| CompFormat == PF_R32F
-					|| CompFormat == PF_G32R32F
-					|| CompFormat == PF_A32B32G32R32F
-					|| CompFormat == PF_A32R32G32B32F) {
+					|| CompFormat == PF_R32G32F
+					|| CompFormat == PF_R32G32B32A32F) {
 					// DevIL's format autodetection doesn't work for
 					//  float images...correct this.
 					Image->Type = IL_FLOAT;
@@ -479,11 +487,11 @@ ILboolean iLoadDdsInternal()
 	return ilFixImage();
 }
 
-
 ILuint DecodePixelFormat(ILuint *CompFormat)
 {
 	ILuint BlockSize;
 
+	DecompressRGBA = IL_FALSE;
 	if (Head.Flags2 & DDS_FOURCC) {
 		BlockSize = ((Head.Width + 3)/4) * ((Head.Height + 3)/4) * Head.Depth;
 		switch (Head.FourCC)
@@ -530,58 +538,102 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 
 			case IL_MAKEFOURCC('$', '\0', '\0', '\0'):
 			case IL_MAKEFOURCC('n', '\0', '\0', '\0'):
-				*CompFormat = PF_A16R16G16B16;
+				*CompFormat = PF_R16G16B16A16;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('o', '\0', '\0', '\0'):
 				*CompFormat = PF_R16F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 2;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('p', '\0', '\0', '\0'):
-				*CompFormat = PF_G16R16F;
+				*CompFormat = PF_R16G16F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('q', '\0', '\0', '\0'):
-				*CompFormat = PF_A16R16B16G16F;
+				*CompFormat = PF_R16G16B16A16F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('r', '\0', '\0', '\0'):
 				*CompFormat = PF_R32F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('s', '\0', '\0', '\0'):
-				*CompFormat = PF_G32R32F;
+				*CompFormat = PF_R32G32F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('t', '\0', '\0', '\0'):
-				*CompFormat = PF_A32R32G32B32F;
+				*CompFormat = PF_R32G32B32A32F;
 				BlockSize = Head.Width * Head.Height * Head.Depth * 16;
+				DecompressRGBA = IL_TRUE;
 				break;
 
 			case IL_MAKEFOURCC('D', 'X', '1', '0'):
 			{
 				switch (ExtHead.DxgiFormat)
 				{
-				case 29:	// sRGB
-				case 91:	// sRGB BGRA
-				case 93:	// sRGB BGR
-					*CompFormat = PF_ARGB;
+				case 27:	// DXGI_FORMAT_R8G8B8A8_TYPELESS
+				case 28:	// DXGI_FORMAT_R8G8B8A8_UNORM
+				case 30:	// DXGI_FORMAT_R8G8B8A8_UINT
+				case 31:	// DXGI_FORMAT_R8G8B8A8_SNORM
+				case 32:	// DXGI_FORMAT_R8G8B8A8_SINT
+					*CompFormat = PF_RGBA;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
 					break;
-				
-				case 72:	// DXT1 sRGB
-					*CompFormat = PF_DXT1_sRGB;
+
+				case 29:	// DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+				case 91:	// DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+				case 93:	// DXGI_FORMAT_B8G8R8X8_UNORM_SRGB
+					*CompFormat = PF_SRGB;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 87:	// DXGI_FORMAT_B8G8R8A8_UNORM
+					*CompFormat = PF_BGRA;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 88:	// DXGI_FORMAT_B8G8R8X8_UNORM
+					*CompFormat = PF_BGR;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 70:
+				case 71:	// DXGI_FORMAT_BC1_UNORM
+					*CompFormat = PF_DXT1;
 					BlockSize *= 8;
 					break;
 
-				case 75:	// DXT3 sRGB
+				case 72:	// DXGI_FORMAT_BC1_UNORM_SRGB
+					*CompFormat = PF_DXT1_sRGB;
+					BlockSize *= 8;
+					break;
+				
+				case 73:
+				case 74:	// DXGI_FORMAT_BC2_UNORM
+					*CompFormat = PF_DXT3;
+					BlockSize *= 16;
+					break;
+
+				case 75:	// DXGI_FORMAT_BC2_UNORM_SRGB
 					*CompFormat = PF_DXT3_sRGB;
+					BlockSize *= 16;
+					break;
+
+				case 76:	// DXGI_FORMAT_BC3_TYPELESS
+				case 77:	// DXGI_FORMAT_BC3_UNORM
+					*CompFormat = PF_DXT5;
 					BlockSize *= 16;
 					break;
 
@@ -600,42 +652,105 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 					BlockSize *= 16;
 					break;
 
-				case 2:		// DXGI_FORMAT_R32G32B32A32_FLOAT
-					*CompFormat = PF_A32B32G32R32F;
+				case 1: // DXGI_FORMAT_R32G32B32A32_TYPELESS
+				case 3: // DXGI_FORMAT_R32G32B32A32_UINT
+				case 4: // DXGI_FORMAT_R32G32B32A32_SINT
+					*CompFormat = PF_R32G32B32A32;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
 					break;
 
-				case 10:	// DXGI_FORMAT_R16G16B16A16_FLOAT
-					*CompFormat = PF_A16B16G16R16F;
-					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+				case 2:		// DXGI_FORMAT_R32G32B32A32_FLOAT
+					*CompFormat = PF_R32G32B32A32F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 16;
 					break;
 
+				case 5: // DXGI_FORMAT_R32G32B32_TYPELESS
+				case 7: // DXGI_FORMAT_R32G32B32_UINT
+				case 8: // DXGI_FORMAT_R32G32B32_SINT
+					*CompFormat = PF_R32G32B32;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 12;
+					break;
+
+				case 6: // DXGI_FORMAT_R32G32B32_FLOAT
+					*CompFormat = PF_R32G32B32F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 12;
+					break;
+
+				case 9:		// DXGI_FORMAT_R16G16B16A16_TYPELESS
 				case 11:	// DXGI_FORMAT_R16G16B16A16_UNORM
 				case 12:	// DXGI_FORMAT_R16G16B16A16_UINT
 				case 13:	// DXGI_FORMAT_R16G16B16A16_SNORM
 				case 14:	// DXGI_FORMAT_R16G16B16A16_SINT
-					*CompFormat = PF_A16B16G16R16;
+					*CompFormat = PF_R16G16B16A16;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					break;
+
+				case 10:	// DXGI_FORMAT_R16G16B16A16_FLOAT
+					*CompFormat = PF_R16G16B16A16F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
+					break;
+
+				case 15: // DXGI_FORMAT_R32G32_TYPELESS
+				case 17: // DXGI_FORMAT_R32G32_UINT
+				case 18: // DXGI_FORMAT_R32G32_SINT
+					*CompFormat = PF_R32G32;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
 					break;
 
 				case 16:	// DXGI_FORMAT_R32G32_FLOAT
-					*CompFormat = PF_G32R32F;
+					*CompFormat = PF_R32G32F;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 8;
 					break;
 
-				case 34:	// DXGI_FORMAT_R16G16_FLOAT
-					*CompFormat = PF_G16R16F;
+				case 33:
+				case 35:
+				case 36:
+				case 37:
+				case 38:
+					*CompFormat = PF_R16G16;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
 					break;
 
+				case 34:	// DXGI_FORMAT_R16G16_FLOAT
+					*CompFormat = PF_R16G16F;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 39:	// DXGI_FORMAT_R32_TYPELESS
+				case 42:	// DXGI_FORMAT_R32_UINT
+				case 43:	// DXGI_FORMAT_R32_SINT
+					*CompFormat = PF_R32;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
+					break;
+
+				case 40:	// DXGI_FORMAT_D32_FLOAT
 				case 41:	// DXGI_FORMAT_R32_FLOAT
 					*CompFormat = PF_R32F;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 4;
 					break;
 
+				case 53:	// DXGI_FORMAT_R16_TYPELESS
+				case 55:	// DXGI_FORMAT_D16_UNORM
+				case 56:	// DXGI_FORMAT_R16_UNORM
+				case 57:	// DXGI_FORMAT_R16_UINT
+				case 58:	// DXGI_FORMAT_R16_SNORM
+				case 59:	// DXGI_FORMAT_R16_SINT
+					*CompFormat = PF_R16;
+					BlockSize = Head.Width * Head.Height * Head.Depth * 2;
+					break;
+
 				case 54:	// DXGI_FORMAT_R16_FLOAT
 					*CompFormat = PF_R16F;
 					BlockSize = Head.Width * Head.Height * Head.Depth * 2;
+					break;
+
+				case 60:	// DXGI_FORMAT_R8_TYPELESS
+				case 61:	// DXGI_FORMAT_R8_UNORM
+				case 62:	// DXGI_FORMAT_R8_UINT
+				case 63:	// DXGI_FORMAT_R8_SNORM
+				case 64:	// DXGI_FORMAT_R8_SINT
+					*CompFormat = PF_R8;
+					BlockSize = Head.Width * Head.Height * Head.Depth;
 					break;
 				}
 			}
@@ -658,7 +773,7 @@ ILuint DecodePixelFormat(ILuint *CompFormat)
 		}
 		else {
 			if (Head.Flags2 & DDS_ALPHAPIXELS) {
-				*CompFormat = PF_ARGB;
+				*CompFormat = PF_RGBA;
 			} else {
 				*CompFormat = PF_RGB;
 			}
@@ -687,8 +802,11 @@ void AdjustVolumeTexture(DDSHEAD *Head, ILuint CompFormat)
 
 	switch (CompFormat)
 	{
-		case PF_ARGB:
+		case PF_RGBA:
 		case PF_RGB:
+		case PF_SRGB:
+		case PF_BGRA:
+		case PF_BGR:
 		case PF_LUMINANCE:
 		case PF_LUMINANCE_ALPHA:
 			//don't use the iCompFormatToBpp() function because this way
@@ -717,16 +835,21 @@ void AdjustVolumeTexture(DDSHEAD *Head, ILuint CompFormat)
 			Head->LinearSize = ((Head->Width+3)/4) * ((Head->Height+3)/4) * 16;
 			break;
 
-		case PF_A16B16G16R16:
-		case PF_A16R16G16B16:
-		case PF_R16F:
-		case PF_G16R16F:
-		case PF_A16B16G16R16F:
-		case PF_A16R16B16G16F:
+		case PF_R8:
+		case PF_R32:
 		case PF_R32F:
-		case PF_G32R32F:
-		case PF_A32B32G32R32F:
-		case PF_A32R32G32B32F:
+		case PF_R16:
+		case PF_R16F:
+		case PF_R16G16:
+		case PF_R16G16F:
+		case PF_R32G32F:
+		case PF_R32G32:
+		case PF_R32G32B32F:
+		case PF_R32G32B32:
+		case PF_R16G16B16A16F:
+		case PF_R16G16B16A16:
+		case PF_R32G32B32A32F:
+		case PF_R32G32B32A32:
 			Head->LinearSize = IL_MAX(1,Head->Width) * IL_MAX(1,Head->Height) *
 				iCompFormatToBpp(CompFormat);
 			break;
@@ -798,10 +921,13 @@ ILboolean AllocImage(ILuint CompFormat)
 	switch (CompFormat)
 	{
 		case PF_RGB:
+		case PF_BGR:
 			if (!ilTexImage(Width, Height, Depth, 3, IL_RGB, IL_UNSIGNED_BYTE, NULL))
 				return IL_FALSE;
 			break;
-		case PF_ARGB:
+		case PF_SRGB:
+		case PF_RGBA:
+		case PF_BGRA:
 			if (!ilTexImage(Width, Height, Depth, 4, IL_RGBA, Has16BitComponents ? IL_UNSIGNED_SHORT : IL_UNSIGNED_BYTE, NULL))
 				return IL_FALSE;
 			break;
@@ -835,21 +961,35 @@ ILboolean AllocImage(ILuint CompFormat)
 				return IL_FALSE;
 			break;
 
-		case PF_A16B16G16R16:
-		case PF_A16R16G16B16:
+		case PF_R8:
+			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
+				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_UNSIGNED_BYTE, NULL))
+				return IL_FALSE;
+
+		case PF_R16:
+		case PF_R16G16:
+		case PF_R16G16B16A16:
 			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
 				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_UNSIGNED_SHORT, NULL))
 				return IL_FALSE;
 			break;
 
+		case PF_R32:
+		case PF_R32G32:
+		case PF_R32G32B32:
+		case PF_R32G32B32A32:
+			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
+				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_UNSIGNED_INT, NULL))
+				return IL_FALSE;
+			break;
+
 		case PF_R16F:
-		case PF_G16R16F:
-		case PF_A16B16G16R16F:
-		case PF_A16R16B16G16F:
+		case PF_R16G16F:
+		case PF_R16G16B16A16F:
 		case PF_R32F:
-		case PF_G32R32F:
-		case PF_A32B32G32R32F:
-		case PF_A32R32G32B32F:
+		case PF_R32G32F:
+		case PF_R32G32B32F:
+		case PF_R32G32B32A32F:
 			if (!ilTexImage(Width, Height, Depth, iCompFormatToChannelCount(CompFormat),
 				ilGetFormatBpp(iCompFormatToChannelCount(CompFormat)), IL_FLOAT, NULL))
 				return IL_FALSE;
@@ -914,32 +1054,52 @@ ILboolean DdsDecompress(ILuint CompFormat)
 	{
 		switch (CompFormat)
 		{
-		case PF_ARGB:
+		case PF_RGBA:
 		case PF_RGB:
+		case PF_BGRA:
+		case PF_BGR:
+		case PF_SRGB:
 		case PF_LUMINANCE:
 		case PF_LUMINANCE_ALPHA:
-			return DecompressARGB(CompFormat);
+			if (DecompressRGBA) // if we have an old DDS format, decode the rgba bits.
+			{
+				ilSetInteger(IL_PIXEL_FORMAT, CompFormat);
+				return DecompressARGB(CompFormat);
+			}
+			else
+			{
+				// otherwise, just copy the image
+				ilSetInteger(IL_PIXEL_FORMAT, CompFormat);
+				memcpy(Image->Data, CompData, Image->SizeOfData);
+				return IL_TRUE;
+			}
 
 		case PF_DXT1_sRGB:
 		case PF_DXT1:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGB);
 			return DecompressDXT1(Image, CompData);
 
 		case PF_DXT2:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGB);
 			return DecompressDXT2(Image, CompData);
 
 		case PF_DXT3_sRGB:
 		case PF_DXT3:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGBA);
 			return DecompressDXT3(Image, CompData);
 
 		case PF_DXT4:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGBA);
 			return DecompressDXT4(Image, CompData);
 
 		case PF_DXT5_sRGB:
 		case PF_DXT5:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGBA);
 			return DecompressDXT5(Image, CompData);
 
 		case PF_BC7_sRGB:
 		case PF_BC7:
+			ilSetInteger(IL_PIXEL_FORMAT, PF_RGBA);
 			return DecompressBC7(Image, CompData);
 
 		case PF_ATI1N:
@@ -951,19 +1111,24 @@ ILboolean DdsDecompress(ILuint CompFormat)
 		case PF_RXGB:
 			return DecompressRXGB();
 
-		case PF_A16R16G16B16:
-		case PF_A16B16G16R16:
+		case PF_R8:
+		case PF_R16:
+		case PF_R16G16:
+		case PF_R32G32B32:
+		case PF_R16G16B16A16:
+		case PF_R32G32B32A32:
+			ilSetInteger(IL_PIXEL_FORMAT, CompFormat);
 			memcpy(Image->Data, CompData, Image->SizeOfData);
 			return IL_TRUE;
 
 		case PF_R16F:
-		case PF_G16R16F:
-		case PF_A16B16G16R16F:
-		case PF_A16R16B16G16F:
+		case PF_R16G16F:
+		case PF_R16G16B16A16F:
 		case PF_R32F:
-		case PF_G32R32F:
-		case PF_A32B32G32R32F:
-		case PF_A32R32G32B32F:
+		case PF_R32G32F:
+		case PF_R32G32B32F:
+		case PF_R32G32B32A32F:
+			ilSetInteger(IL_PIXEL_FORMAT, CompFormat);
 			return DecompressFloat(CompFormat);
 
 		case PF_UNKNOWN:
@@ -1057,13 +1222,12 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 
 		if (Head.Flags1 & DDS_LINEARSIZE) {
 			if (CompFormat == PF_R16F
-				|| CompFormat == PF_G16R16F
-				|| CompFormat == PF_A16B16G16R16F
-				|| CompFormat == PF_A16R16B16G16F
+				|| CompFormat == PF_R16G16F
+				|| CompFormat == PF_R16G16B16A16F
 				|| CompFormat == PF_R32F
-				|| CompFormat == PF_G32R32F
-				|| CompFormat == PF_A32B32G32R32F
-				|| CompFormat == PF_A32R32G32B32F) {
+				|| CompFormat == PF_R32G32F
+				|| CompFormat == PF_R32G32B32F
+				|| CompFormat == PF_R32G32B32A32F) {
 				CompSize = Width * Height * Depth * Bpp;
 
 				//DevIL's format autodetection doesn't work for
@@ -1071,10 +1235,20 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 				Image->Type = IL_FLOAT;
 				Image->Bpp = Channels;
 			}
-			else if (CompFormat == PF_A16B16G16R16
-					|| CompFormat == PF_A16R16G16B16)
+			else if (CompFormat == PF_R8
+					|| CompFormat == PF_R16
+					|| CompFormat == PF_R32
+					|| CompFormat == PF_R16G16
+					|| CompFormat == PF_R32G32
+					|| CompFormat == PF_R32G32B32
+					|| CompFormat == PF_R16G16B16A16
+					|| CompFormat == PF_R32G32B32A32)
 				CompSize = Width * Height * Depth * Bpp;
-			else if (CompFormat != PF_RGB && CompFormat != PF_ARGB
+			else if (CompFormat != PF_RGB 
+				&& CompFormat != PF_RGBA 
+				&& CompFormat != PF_SRGB 
+				&& CompFormat != PF_BGRA 
+				&& CompFormat != PF_BGR
 				&& CompFormat != PF_LUMINANCE
 				&& CompFormat != PF_LUMINANCE_ALPHA) {
 
@@ -1867,24 +2041,20 @@ ILboolean DecompressFloat(ILuint lCompFormat)
 
 	switch (lCompFormat)
 	{
-		case PF_R32F:  // Red float, green = blue = max
-			Size = Image->Width * Image->Height * Image->Depth * 3;
-			for (i = 0, j = 0; i < Size; i += 3, j++) {
+		case PF_R32F:  // Red float
+			Size = Image->Width * Image->Height * Image->Depth * 1;
+			for (i = 0, j = 0; i < Size; i++, j++) {
 				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
-				((ILfloat*)Image->Data)[i+1] = 1.0f;
-				((ILfloat*)Image->Data)[i+2] = 1.0f;
 			}
 			return IL_TRUE;
-		case PF_A32B32G32R32F:  // Direct copy of float RGBA data
-			Size = Image->Width * Image->Height * Image->Depth * 4;
-			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
-				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j+2];
-				((ILfloat*)Image->Data)[i + 1] = ((ILfloat*)CompData)[j+1];
-				((ILfloat*)Image->Data)[i + 2] = ((ILfloat*)CompData)[j];
-				((ILfloat*)Image->Data)[i + 3] = ((ILfloat*)CompData)[j + 3];
+		case PF_R32G32B32F:  // Direct copy of float RGBA data
+			Size = Image->Width * Image->Height * Image->Depth * 3;
+			for (i = 0, j = 0; i < Size; i += 3, j += 3) {
+				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
+				((ILfloat*)Image->Data)[i + 1] = ((ILfloat*)CompData)[j + 1];
+				((ILfloat*)Image->Data)[i + 2] = ((ILfloat*)CompData)[j + 2];
 			}
-			return IL_TRUE;
-		case PF_A32R32G32B32F:  // Direct copy of float RGBA data
+		case PF_R32G32B32A32F:  // Direct copy of float RGBA data
 			Size = Image->Width * Image->Height * Image->Depth * 4;
 			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
 				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
@@ -1893,46 +2063,33 @@ ILboolean DecompressFloat(ILuint lCompFormat)
 				((ILfloat*)Image->Data)[i + 3] = ((ILfloat*)CompData)[j + 3];
 			}
 			return IL_TRUE;
-		case PF_G32R32F:  // Red float, green float, blue = max
-			Size = Image->Width * Image->Height * Image->Depth * 3;
-			for (i = 0, j = 0; i < Size; i += 3, j += 2) {
-				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j+1];
-				((ILfloat*)Image->Data)[i+1] = ((ILfloat*)CompData)[j];
-				((ILfloat*)Image->Data)[i+2] = 1.0f;
+		case PF_R32G32F:  // Red float, green float
+			Size = Image->Width * Image->Height * Image->Depth * 2;
+			for (i = 0, j = 0; i < Size; i += 2, j += 2) {
+				((ILfloat*)Image->Data)[i] = ((ILfloat*)CompData)[j];
+				((ILfloat*)Image->Data)[i + 1] = ((ILfloat*)CompData)[j + 1];
 			}
 			return IL_TRUE;
-		case PF_R16F:  // Red float, green = blue = max
-			Size = Image->Width * Image->Height * Image->Depth * 3;
-			for (i = 0, j = 0; i < Size; i += 3, j++) {
+		case PF_R16F:  // Red float
+			Size = Image->Width * Image->Height * Image->Depth * 1;
+			for (i = 0, j = 0; i < Size; i++, j++) {
 				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j);
-				((ILfloat*)Image->Data)[i + 1] = 1.0f;
-				((ILfloat*)Image->Data)[i + 2] = 1.0f;
 			}
 			return IL_TRUE;
-		case PF_A16B16G16R16F:  // Just convert from half to float.
+		case PF_R16G16B16A16F:  // Just convert from half to float.
 			Size = Image->Width * Image->Height * Image->Depth * 4;
 			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
-				iConvHalfToFloat((ILuint*)(Image->Data)+i,		(ILushort*)(CompData)+j+2);
-				iConvHalfToFloat((ILuint*)(Image->Data)+i+1,	(ILushort*)(CompData)+j+1);
-				iConvHalfToFloat((ILuint*)(Image->Data)+i+2,	(ILushort*)(CompData)+j);
-				((ILfloat*)Image->Data)[i + 3] = 1.0f;
+				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j);
+				iConvHalfToFloat((ILuint*)(Image->Data) + i + 1,	(ILushort*)(CompData) + j + 1);
+				iConvHalfToFloat((ILuint*)(Image->Data) + i + 2,	(ILushort*)(CompData) + j + 2);
+				iConvHalfToFloat((ILuint*)(Image->Data) + i + 3,	(ILushort*)(CompData) + j + 3);
 			}
 			return IL_TRUE;
-		case PF_A16R16B16G16F:  // Just convert from half to float.
-			Size = Image->Width * Image->Height * Image->Depth * 4;
-			for (i = 0, j = 0; i < Size; i += 4, j += 4) {
-				iConvHalfToFloat((ILuint*)(Image->Data)+i, (ILushort*)(CompData)+j);
-				iConvHalfToFloat((ILuint*)(Image->Data)+i+1, (ILushort*)(CompData)+j+1);
-				iConvHalfToFloat((ILuint*)(Image->Data)+i+2, (ILushort*)(CompData)+j+2);
-				((ILfloat*)Image->Data)[i + 3] = 1.0f;
-			}
-			return IL_TRUE;
-		case PF_G16R16F:  // Convert from half to float, set blue = max.
-			Size = Image->Width * Image->Height * Image->Depth * 3;
-			for (i = 0, j = 0; i < Size; i += 3, j += 2) {
-				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j + 1);
-				iConvHalfToFloat((ILuint*)(Image->Data) + i + 1,	(ILushort*)(CompData) + j);
-				((ILfloat*)Image->Data)[i + 2] = 1.0f;
+		case PF_R16G16F:  // Convert from half to float
+			Size = Image->Width * Image->Height * Image->Depth * 2;
+			for (i = 0, j = 0; i < Size; i += 2, j += 2) {
+				iConvHalfToFloat((ILuint*)(Image->Data) + i,		(ILushort*)(CompData) + j);
+				iConvHalfToFloat((ILuint*)(Image->Data) + i + 1,	(ILushort*)(CompData) + j + 1);
 			}
 			return IL_TRUE;
 		default:
