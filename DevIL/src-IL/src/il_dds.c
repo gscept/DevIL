@@ -243,7 +243,10 @@ ILubyte iCompFormatToBpp(ILenum Format)
 {
 	//non-compressed (= non-FOURCC) codes
 	if (Format == PF_LUMINANCE || Format == PF_LUMINANCE_ALPHA || Format == PF_RGBA || Format == PF_BGRA || Format == PF_SRGB)
-		return Head.RGBBitCount/8;
+		if (DecompressRGBA)
+			return Head.RGBBitCount / 8;
+		else
+			return 4;
 
 	//fourcc formats
 	else if (Format == PF_RGB || Format == PF_BGR || Format == PF_3DC || Format == PF_RXGB)
