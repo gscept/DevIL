@@ -93,7 +93,8 @@ void ilDefaultStates()
 	ilStates[ilCurrentPos].ilUseSquishDXT = IL_FALSE;
 	ilStates[ilCurrentPos].ilPixelFormat = 0xFF;
 
-
+	ilStates[ilCurrentPos].ilDDSFirstMip = 0;
+	ilStates[ilCurrentPos].ilDDSLastMip = UINT_MAX;
 
 	ilHints.MemVsSpeedHint = IL_FASTEST;
 	ilHints.CompressHint = IL_USE_COMPRESSION;
@@ -446,6 +447,12 @@ void ILAPIENTRY ilGetIntegerv(ILenum Mode, ILint *Param)
 		case IL_PIXEL_FORMAT:
 			*Param = ilStates[ilCurrentPos].ilPixelFormat;
 			break;
+		case IL_DDS_FIRST_MIP:
+			*Param = ilStates[ilCurrentPos].ilDDSFirstMip;
+			break;
+		case IL_DDS_LAST_MIP:
+			*Param = ilStates[ilCurrentPos].ilDDSLastMip;
+			break;
 		case IL_ORIGIN_MODE:
 			*Param = ilStates[ilCurrentPos].ilOriginMode;
 			break;
@@ -645,7 +652,18 @@ void ILAPIENTRY iGetIntegervImage(ILimage *Image, ILenum Mode, ILint *Param)
 			for (SubImage = Image->Mipmaps; SubImage; SubImage = SubImage->Mipmaps)
                 (*Param)++;
             break;
-
+		case IL_DDS_MIP_HEADER_COUNT:
+			(*Param) = Image->DDSMipCount;
+			break;
+		case IL_DDS_WIDTH_HEADER:
+			(*Param) = Image->DDSWidth;
+			break;
+		case IL_DDS_HEIGHT_HEADER:
+			(*Param) = Image->DDSHeight;
+			break;
+		case IL_DDS_DEPTH_HEADER:
+			(*Param) = Image->DDSDepth;
+			break;
         case IL_PALETTE_TYPE:
              *Param = Image->Pal.PalType;
              break;
@@ -1050,6 +1068,18 @@ void ILAPIENTRY ilSetInteger(ILenum Mode, ILint Param)
 		case IL_DXTC_NO_DECOMPRESS:
 			if (Param == IL_FALSE || Param == IL_TRUE) {
 				ilStates[ilCurrentPos].ilDxtcNoDecompress = Param;
+				return;
+			}
+			break;
+		case IL_DDS_FIRST_MIP:
+			if (Param >= INT_MIN || Param <= INT_MAX) {
+				ilStates[ilCurrentPos].ilDDSFirstMip = Param;
+				return;
+			}
+			break;
+		case IL_DDS_LAST_MIP:
+			if (Param >= INT_MIN || Param <= INT_MAX) {
+				ilStates[ilCurrentPos].ilDDSLastMip = Param;
 				return;
 			}
 			break;

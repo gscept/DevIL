@@ -92,6 +92,10 @@ typedef struct ILimage
 	ILubyte*        DxtcData;    //!< compressed data
 	ILenum          DxtcFormat;  //!< compressed data format
 	ILuint          DxtcSize;    //!< compressed data size
+	ILuint			DDSMipCount; //!< number of mips as declared in header
+	ILuint			DDSWidth;	 //!< width as provided in dds header
+	ILuint			DDSHeight;	 //!< height as provided in dds header
+	ILuint			DDSDepth;	 //!< depth as provided in dds header
 } ILimage;
 
 

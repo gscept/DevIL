@@ -403,6 +403,10 @@ ILboolean iLoadDdsInternal()
 {
 	ILuint	BlockSize = 0;
 	ILuint	CompFormat;
+	ILint	FirstMip;
+	ILint	LastMip;
+	ILuint	HeaderMipCount;
+	ILuint	HeaderWidth, HeaderHeight, HeaderDepth;
 
 	CompData = NULL;
 	Image = NULL;
@@ -426,13 +430,58 @@ ILboolean iLoadDdsInternal()
 			return IL_FALSE;
 		}
 	}
+	HeaderMipCount = Head.MipMapCount;
+	HeaderWidth = Head.Width;
+	HeaderHeight = Head.Height;
+	HeaderDepth = Head.Depth;
 
+	// if negative, count the number of mips from the back
+	FirstMip = ilGetInteger(IL_DDS_FIRST_MIP);
+	if (FirstMip < 0)
+		FirstMip = Head.MipMapCount + FirstMip; // effectively count - FirstMip
+	
+	FirstMip = IL_LIMIT(FirstMip, 0, Head.MipMapCount);
+
+	// if negative, count number of mips from the back
+	LastMip = ilGetInteger(IL_DDS_LAST_MIP);
+	if (LastMip < 0)
+		LastMip = Head.MipMapCount + LastMip + 1; // effectively count - LastMip
+	LastMip = IL_LIMIT(LastMip, 0, Head.MipMapCount);
+
+
+	if (LastMip < FirstMip) {
+		ilSetError(IL_INVALID_VALUE);
+		return IL_FALSE;
+	}
+
+	Head.MipMapCount = IL_LIMIT(Head.MipMapCount, 1, LastMip - FirstMip);
+
+	// calculate memory offset to first mip
+	ILuint mipOffset = 0;
+	for (ILint i = 0; i < FirstMip; i++) {
+		mipOffset += DecodePixelFormat(&CompFormat);
+
+		Head.Width = Head.Width >> 1;
+		Head.Height = Head.Height >> 1;
+		Head.Depth = Head.Depth >> 1;
+		if (Head.Width == 0)
+			Head.Width = 1;
+		if (Head.Height == 0)
+			Head.Height = 1;
+		if (Head.Depth == 0)
+			Head.Depth = 1;
+	}
+
+	// move cursor to mip
+	iseek(mipOffset, IL_SEEK_CUR);
 	BlockSize = DecodePixelFormat(&CompFormat);
+
 	if (CompFormat == PF_UNKNOWN) {
 		ilSetError(IL_INVALID_FILE_HEADER);
 		return IL_FALSE;
 	}
 	Check16BitComponents(&Head);
+
 	CompSize = BlockSize;
 
 	// Microsoft bug, they're not following their own documentation.
@@ -447,6 +496,10 @@ ILboolean iLoadDdsInternal()
 		if (Head.ddsCaps2 & DDS_CUBEMAP) {
 			if (!iLoadDdsCubemapInternal(CompFormat))
 				return IL_FALSE;
+			iCurImage->DDSMipCount = IL_MAX(HeaderMipCount, 1);
+			iCurImage->DDSWidth = HeaderWidth;
+			iCurImage->DDSHeight = HeaderHeight;
+			iCurImage->DDSDepth = HeaderDepth;
 			return IL_TRUE;
 		}
 	}
@@ -473,6 +526,10 @@ ILboolean iLoadDdsInternal()
 		return IL_FALSE;
 	}
 
+	iCurImage->DDSMipCount = IL_MAX(HeaderMipCount, 1);
+	iCurImage->DDSWidth = HeaderWidth;
+	iCurImage->DDSHeight = HeaderHeight;
+	iCurImage->DDSDepth = HeaderDepth;
 	if (!ReadMipmaps(CompFormat)) {
 		if (CompData) {
 			ifree(CompData);
@@ -1206,9 +1263,9 @@ ILboolean ReadMipmaps(ILuint CompFormat)
 
 	LastLinear = Head.LinearSize;
 	for (i = 0; i < Head.MipMapCount - 1; i++) {
-		Depth = Depth / 2;
-		Width = Width / 2;
-		Height = Height / 2;
+		Depth = Depth >> 1;
+		Width = Width >> 1;
+		Height = Height >> 1;
 
 		if (Depth == 0) 
 			Depth = 1;

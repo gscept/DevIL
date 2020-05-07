@@ -62,7 +62,8 @@ typedef struct IL_STATES
 	ILboolean	ilUseSquishDXT;
 	ILboolean	ilDxtcNoDecompress;
 	ILenum		ilPixelFormat;
-
+	ILuint		ilDDSFirstMip;
+	ILuint		ilDDSLastMip;
 
 	//
 	// Format-specific states
